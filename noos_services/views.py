@@ -19,6 +19,16 @@ def index(request):
 class UserViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows users to be viewed or edited.
+
+    list:
+    API endpoint that allows users to be viewed.
+    Receives a GET request.
+    Returns the complete users list.
+
+    read:
+    API endpoint that allows users to be viewed.
+    Receives a GET request with an ID number.
+    Returns one users object.
     """
     permission_classes = (permissions.DjangoModelPermissions,)
     queryset = User.objects.all().order_by('-date_joined')
@@ -28,6 +38,16 @@ class UserViewSet(viewsets.ModelViewSet):
 class GroupViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows groups to be viewed or edited.
+
+    list:
+    API endpoint that allows groups to be viewed.
+    Receives a GET request.
+    Returns the complete groups list.
+
+    read:
+    API endpoint that allows groups to be viewed.
+    Receives a GET request with an ID number.
+    Returns one group object.
     """
     permission_classes = (permissions.DjangoModelPermissions,)
     queryset = Group.objects.all()
@@ -37,6 +57,16 @@ class GroupViewSet(viewsets.ModelViewSet):
 class NodeViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows nodes to be viewed or edited.
+
+    list:
+    API endpoint that allows nodes to be viewed.
+    Receives a GET request.
+    Returns the complete nodes list.
+
+    read:
+    API endpoint that allows nodes to be viewed.
+    Receives a GET request with an ID number.
+    Returns one nodes object.
     """
     permission_classes = (permissions.DjangoModelPermissions,)
     queryset = Node.objects.all()
@@ -48,7 +78,21 @@ class NodeViewSet(viewsets.ModelViewSet):
 
 class SimulationDemandViewSet(viewsets.ModelViewSet):
     """
-    API endpoint that allows SimulationDemands to be viewed or edited.
+    API endpoint that allows simulationdemands to be viewed or edited.
+
+    list:
+    API endpoint that allows simulationdemands to be viewed.
+    Receives a GET request.
+    Returns the complete simulationdemands list.
+
+    create:
+    API endpoint that allows simulationdemands to be added.
+    Receives a POST request with one data fields ( 'json_txt' the related simulation's escaped json ).
+
+    read:
+    API endpoint that allows simulationdemands to be viewed.
+    Receives a GET request with an ID number.
+    Returns one simulationdemands object.
     """
     permission_classes = (permissions.DjangoModelPermissions,)
     queryset = SimulationDemand.objects.all()
@@ -60,7 +104,21 @@ class SimulationDemandViewSet(viewsets.ModelViewSet):
 
 class LoggingMessageViewSet(viewsets.ModelViewSet):
     """
-    API endpoint that allows LoggingMessages to be viewed or edited.
+    API endpoint that allows loggingmessages to be viewed or edited.
+
+    list:
+    API endpoint that allows loggingmessages to be viewed.
+    Receives a GET request.
+    Returns the complete loggingmessages list.
+
+    create:
+    API endpoint that allows loggingmessages to be added.
+    Receives a POST request with six data fields ( 'status', 'message', 'node' the node 's ID, 'forcing_couple' the forcings's ID used, 'noos_model' the models's ID used, 'simulation_demand' the related simulation's ID ).
+
+    read:
+    API endpoint that allows loggingmessages to be viewed.
+    Receives a GET request with an ID number.
+    Returns one loggingmessages object.
     """
     permission_classes = (permissions.DjangoModelPermissions,)
     queryset = LoggingMessage.objects.all()
@@ -72,7 +130,17 @@ class LoggingMessageViewSet(viewsets.ModelViewSet):
 
 class ForcingViewSet(viewsets.ModelViewSet):
     """
-    API endpoint that allows Forcings to be viewed or edited.
+    API endpoint that allows forcings to be viewed or edited.
+
+    list:
+    API endpoint that allows forcings to be viewed.
+    Receives a GET request.
+    Returns the complete forcings list.
+
+    read:
+    API endpoint that allows forcings to be viewed.
+    Receives a GET request with an ID number.
+    Returns one forcing object.
     """
     permission_classes = (permissions.DjangoModelPermissions,)
     queryset = Forcing.objects.all()
@@ -96,7 +164,17 @@ class ForcingCoupleViewSet(viewsets.ModelViewSet):
 
 class NoosModelViewSet(viewsets.ModelViewSet):
     """
-    API endpoint that allows NoosModel objects to be viewed or edited.
+    API endpoint that allows noosmodels to be viewed or edited.
+
+    list:
+    API endpoint that allows noosmodels to be viewed.
+    Receives a GET request.
+    Returns the complete noosmodels list.
+
+    read:
+    API endpoint that allows noosmodels to be viewed.
+    Receives a GET request with an ID number.
+    Returns one noosmodels object.
     """
     permission_classes = (permissions.DjangoModelPermissions,)
     queryset = NoosModel.objects.all()
@@ -108,7 +186,21 @@ class NoosModelViewSet(viewsets.ModelViewSet):
 
 class UploadedFileViewSet(viewsets.ModelViewSet):
     """
-    API endpoint that allows UploadedFile objects to be viewed or edited.
+    API endpoint that allows uploadedfiles to be viewed or edited.
+
+    list:
+    API endpoint that allows uploadedfiles to be viewed.
+    Receives a GET request.
+    Returns the complete uploadedfiles list.
+
+    create:
+    API endpoint that allows uploadedfiles to be added.
+    Receives a POST request with six data fields ( 'filename' name of uploaded file, 'json_txt' the related simulation's escaped json, 'simulation' the related simulation's ID, 'node' the node's ID that upload the file, 'noos_model' the model's ID used, 'forcing_couple' the forcings couple ID used ).
+
+    read:
+    API endpoint that allows uploadedfiles to be viewed.
+    Receives a GET request with an ID number.
+    Returns one uploadedfiles object.
     """
     permission_classes = (permissions.DjangoModelPermissions,)
     queryset = UploadedFile.objects.all()

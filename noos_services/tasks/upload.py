@@ -1,7 +1,8 @@
 #!/usr/bin/python
 
 import sys
-import pysftp
+# import pysftp
+import ftplib
 
 if sys.version_info.major != 3:
     print("This utility is not compatible with Python v{}.{}.{}".format(sys.version_info.major, sys.version_info.minor,
@@ -9,7 +10,7 @@ if sys.version_info.major != 3:
     sys.exit(0)
 import getopt
 # from scp import SCPClient
-from os.path import expanduser, join, isfile, exists, abspath
+from os.path import expanduser, join, isfile, exists, abspath, split
 from os import environ
 # import paramiko
 
@@ -122,7 +123,7 @@ def main(argv):
     # password = ""
 
     # dest = "~/gitrepo/noosDrift/requests/"
-    dest = "~/Django/noosDrift/requests/"
+    dest = "Django/noosDrift/requests/"
 
     print("Python v{}.{}.{} - NOOS-Drift Upload utility".format(sys.version_info.major, sys.version_info.minor,
                                                                 sys.version_info.micro))
@@ -152,10 +153,18 @@ def main(argv):
 
     print('File to upload is: "' + file_to_upload + '"')
     src = abspath(file_to_upload)
+    path, filename = split(src)
     # secure_copy(user, host, src, dest, key_filename="")
-    with pysftp.Connection(host, username=user, password=password) as sftp:
-        with sftp.cd(dest):  # temporarily chdir to test_sftp
-            sftp.put(src)  # upload file to public/ on remote
+    # cnopts = pysftp.CnOpts()
+    # cnopts.hostkeys = None
+    # with pysftp.Connection(host, username=user, password=password, cnopts=cnopts) as sftp:
+    #     with sftp.cd(dest):  # temporarily chdir to test_sftp
+    #        sftp.put(src)  # upload file to public/ on remote
+
+    with ftplib.FTP(host, user, password) as session:
+        with open(src, 'rb') as file:
+            # session.cwd(dest)
+            session.storbinary("STOR {}".format(filename), file)
 
 
 if __name__ == "__main__":
