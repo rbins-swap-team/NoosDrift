@@ -2,6 +2,7 @@ from django.db import models
 import coreapi
 import glob
 import json
+import jsonfield
 import logging
 from noosDrift.settings import ACTIVE_NODES
 
@@ -382,7 +383,8 @@ class SimulationDemand(models.Model):
     """
     user = models.ForeignKey('auth.User', related_name='simulations', on_delete=models.SET_NULL, blank=True, null=True)
     created_time = models.DateTimeField(auto_now_add=True)
-    json_txt = models.TextField(default='{}')
+    # json_txt = models.TextField(default='{}')
+    json_txt = jsonfield.JSONField()
 
     def __str__(self):
         return u'%d: %s, %s' % (self.pk, self.created_time, self.json_txt)
@@ -478,7 +480,8 @@ class UploadedFile(models.Model):
 
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now_add=True)
-    json_txt = models.TextField(default='{}')
+    # json_txt = models.TextField(default='{}')
+    json_txt = jsonfield.JSONField()
 
     def __str__(self):
         return u'%d: %s, %s, %s, %s, %s, %s, %s, %s' % (self.pk, self.node, self.simulation, self.noos_model,

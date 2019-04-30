@@ -73,10 +73,8 @@ def common_logging(**kwargs):
           dispatch_uid="simulation_demand_is_received_gcd1angstgy95wrh118wrz2cy8rut8uw")
 def simulation_demand_is_received(sender, instance, **kwargs):
     logger.info("Signal.simulation_demand_is_recieved")
-    json_dict = json.loads(instance.json_txt)
-    if 'id' in json_dict:
-        instance.id = json_dict['id']
-
+    if hasattr(instance.json_txt,"id") is True:
+        instance.id = instance.json_txt.id
 
 @receiver(post_save, sender=SimulationDemand,
           dispatch_uid="simulation_demand_is_created_gcd1angstgy54wrh118wrz2cy8rut8uw")
@@ -174,7 +172,7 @@ def success_handler(result=None, sender=None, headers=None, body=None, **kwargs)
             "noos_model": result["noos_model_id"],
             "forcing_couple": result["forcing_couple_id"],
             "filename": result["filename"],
-            "json_txt": "{}"
+            "json_txt": json.loads('{}')
         }
 
         logger.debug("{}, sending uploaded message to Central".format(object_and_method))

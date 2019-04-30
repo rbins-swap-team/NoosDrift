@@ -200,7 +200,7 @@ class Job:
                 raise
 
             # Adding the couple of forcings in the json input file
-            json_obj = json.loads(simulation_demand.json_txt)
+            json_obj = simulation_demand.json_txt
             json_obj["model_set_up"]["ocean_forcing"] = aforcing_couple.oceanical.code
             json_obj["model_set_up"]["wind_forcing"] = aforcing_couple.meteorological.code
             new_json_str = json.dumps(json_obj)
@@ -250,21 +250,17 @@ class Job:
         message_tmp = "{} Sending Simulation demand {} to node {}:{}"
 
         # the json_txt of the simulation demand which has no "id" yet
-        # I convert this into a dict object
-        simulation_demand_dict = json.loads(simulation_demand.json_txt)
+        simulation_demand_json_level1 = simulation_demand.json_txt
 
         the_nodes = Node.objects.filter(is_active=True)
 
-        result_simulation_demand_dict = {}
+        # result_simulation_demand_dict = {}
+        result_simulation_demand_json = {}
 
         # Here I get back the id of the simulation demand and I put it into the object I want to send
-        simulation_demand_dict["id"] = simulation_demand.id
+        simulation_demand_json_level1["id"] = simulation_demand.id
 
-        # The object has to be transformed back into text(json) and added as a "json_txt" property to the object
-        # I want to send
-        simulation_demand_as_json_with_id = json.dumps(simulation_demand_dict, separators=(',', ':'))
-        result_simulation_demand_dict["json_txt"] = simulation_demand_as_json_with_id
-        result_simulation_demand_json = json.dumps(result_simulation_demand_dict, separators=(',', ':'))
+        result_simulation_demand_json["json_txt"] = simulation_demand_json_level1
 
         logger.info("{}, json text {}".format(objectandmethod, result_simulation_demand_json))
 

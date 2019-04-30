@@ -16,6 +16,9 @@ import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+CENTRAL_ROLE = "Central"
+NODE_ROLE = "Node"
+
 NOOS_NODE_ID = "NOOS_NODE_ID"
 NOOS_USERNAME = "NOOS_USERNAME"
 NOOS_USERPWD = "NOOS_USERPWD"
