@@ -5,3 +5,8 @@ logs/*log
 logs/*txt
 logs/*csv
 requests/*
+requests
+results/*
+requests_data/*
+static/requests_data/*
+/venv3.7/

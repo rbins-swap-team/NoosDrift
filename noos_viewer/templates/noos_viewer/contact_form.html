@@ -1,0 +1,49 @@
+{% extends 'noos_viewer/base.html' %}
+
+{% load static %}
+
+{% block title %}Contact{% endblock %}
+
+{% block body_block %}
+     <div class="container top-content">
+        <div class="row">
+            <div class="col-5"><h2>Contact</h2></div>
+            <div class="col-7 text-right">
+                    <span class="float-right">
+                        <a class="btn btn-primary" href="{% url 'noos_viewer:simulationdemands' %}"
+                                   role="button">
+                           <i class="fas fa-list-ol"></i>&nbsp;All Simulations
+                        </a>
+                    </span>
+            </div>
+        </div>
+        <form method="POST">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="fieldWrapper row form-group"
+                     aria-required="{% if field.field.required %}true{% else %}false{% endif %}">
+                    <div class="col-md-2">
+                        {% if field.help_text %}
+                            <span class="help" data-toggle="tooltip" data-placement="bottom"
+                                  title="{{ field.help_text|striptags|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                        {% endif %}
+                        {{ field.label_tag }}
+                        {% if field.field.required %}
+                            <span class="required">*</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-10">
+                        {{ field }}
+                    </div>
+                </div>
+            {% endfor %}
+            <div class="row" style="margin-top: 2rem; margin-bottom: 2rem;">
+                <div class="col-4 mx-auto text-center">
+                    <input class="btn btn-success" type="submit" value="Send Message">
+                </div>
+            </div>
+        </form>
+    </div>
+{% endblock %}

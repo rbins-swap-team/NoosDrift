@@ -1,0 +1,733 @@
+{% extends 'noos_viewer/base.html' %}
+
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Simulation Demand {{ form.id.value }}{% endblock %}
+
+{% block body_block %}
+    <div class="container top-content">
+        <div class="row">
+            <div class="col-5"><h2>Simulation description</h2></div>
+            <div class="col-7 text-right">
+                    <span class="float-right">
+                        <a class="btn btn-primary" href="{% url 'noos_viewer:simulationdemands' %}"
+                                   role="button">
+                           <i class="fas fa-list-ol"></i>&nbsp;All Simulations
+                        </a>
+                        <a href="{% url 'noos_viewer:new_simulationdemand' %}" class="btn btn-outline-success"
+                           role="button" data-toggle="tooltip" data-placement="bottom"
+                           title="New simulation">
+                           <i class="material-icons" style="vertical-align: middle;">add_circle_outline</i>
+                        </a>
+
+                        {% if sim_status == 'OK' %}
+                        {% if theid %}
+                        <a href="{% url 'noos_viewer:viewresults_simulationdemand' simulationid=theid %}" class="btn btn-outline-info"
+                           role="button"
+                           data-toggle="tooltip"
+                           data-placement="bottom"
+                           title="View results">
+                            <i class="material-icons" style="vertical-align: middle;font-size: 1rem;">remove_red_eye</i>
+                        </a>
+                        {% endif %}
+                        {% if zipurl %}
+                        <a href="{{zipurl}}" class="btn btn-outline-info"
+                           role="button"
+                           data-toggle="tooltip"
+                           data-placement="bottom"
+                           title="Download">
+                            <i class="material-icons" style="vertical-align: middle;font-size: 1rem;">remove_red_eye</i>
+                        </a>
+                        {% endif %}
+                        {% endif %}
+                        {% if theid %}
+                       <a href="{% url 'noos_viewer:view_simulationdemand' simulationid=theid %}"
+                           class="btn btn-outline-info"
+                           role="button"
+                           data-toggle="tooltip"
+                           data-placement="bottom"
+                           title="View Demand">
+                            <i class="material-icons" style="vertical-align: middle;font-size: 1rem;">remove_red_eye</i>
+                        </a>
+                        <a href="{% url 'noos_viewer:protect_simulationdemand' simulationid=theid %}"
+                           class="btn btn-outline-warning" role="button" data-toggle="tooltip"
+                           data-placement="bottom"
+                           title="Prevent deletion">
+                            <i class="material-icons" style="vertical-align: middle;font-size: 1rem;">lock_open</i>
+                        </a>
+                        <a href="{% url 'noos_viewer:newfrommodel_simulationdemand' simulationid=theid %}"
+                           class="btn btn-outline-primary" role="button" data-toggle="tooltip"
+                           data-placement="bottom"
+                           title="Create a new simulation based on this one">
+                            <i class="material-icons" style="vertical-align: middle;font-size: 1rem;">file_copy</i>
+                        </a>
+                        {% endif %}
+                    </span>
+            </div>
+        </div>
+        <form name="name_demandform" id="id_demandform" action="{{ nexthtml }}" method="post">
+            {% csrf_token %}
+            {% if theid %}
+                <div class="fieldWrapper row form-group"
+                     aria-required="{% if form.id.field.required %}true{% else %}false{% endif %}">
+                    <div class="col-md-2">
+                        {% if form.id.help_text %}
+                            <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                                  title="{{ form.id.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                        {% endif %}
+                        {{ form.id.label_tag }}
+                        {% if form.id.field.required %}
+                            <span class="required">*</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-10">
+                        {{ form.id }}
+                    </div>
+                </div>
+                <div class="fieldWrapper row form-group"
+                     aria-required="{% if form.created_time.field.required %}true{% else %}false{% endif %}">
+                    <div class="col-md-2">
+                        {% if form.created_time.help_text %}
+                            <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                                  title="{{ form.created_time.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                        {% endif %}
+                        {{ form.created_time.label_tag }}
+                        {% if form.created_time.field.required %}
+                            <span class="required">*</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-10">
+                        {{ form.created_time }}
+                    </div>
+                </div>
+            {% endif %}
+            <div class="fieldWrapper row form-group"
+                 aria-required="{% if form.title.field.required %}true{% else %}false{% endif %}">
+                <div class="col-md-2">
+                    {% if form.title.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.title.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.title.label_tag }}
+                    {% if form.title.field.required %}
+                        <span class="required">*</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    {{ form.title }}
+                </div>
+            </div>
+            <div class="fieldWrapper row form-group"
+                 aria-required="{% if form.simulation_type.field.required %}true{% else %}false{% endif %}">
+                <div class="col-md-2">
+                    {% if form.simulation_type.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.simulation_type.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.simulation_type.label_tag }}
+                    {% if form.simulation_type.field.required %}
+                        <span class="required">*</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    {% if theid is None %}
+                        {{ form.simulation_type }}
+                    {% else %}
+                        {{ form.simulation_type|append_attr:"disabled:true" }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="fieldWrapper row form-group"
+                 aria-required="{% if form.summary.field.required %}true{% else %}false{% endif %}">
+                <div class="col-md-2">
+                    {% if form.summary.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.summary.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.summary.label_tag }}
+                    {% if form.summary.field.required %}
+                        <span class="required">*</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    {{ form.summary }}
+                </div>
+            </div>
+            {% if theid %}
+                <div class="fieldWrapper row form-group"
+                     aria-required="{% if form.status.field.required %}true{% else %}false{% endif %}">
+                    <div class="col-md-2">
+                        {% if form.status.help_text %}
+                            <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                                  title="{{ form.status.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                        {% endif %}
+                        {{ form.status.label_tag }}
+                        {% if form.status.field.required %}
+                            <span class="required">*</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-10">
+                        {{ form.status }}
+                    </div>
+                </div>
+            {% endif %}
+            <div class="fieldWrapper row form-group"
+                 aria-required="{% if form.tags.field.required %}true{% else %}false{% endif %}">
+                <div class="col-md-2">
+                    {% if form.tags.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.tags.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.tags.label_tag }}
+                    {% if form.tags.field.required %}
+                        <span class="required">*</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    {{ form.tags }}
+                </div>
+            </div>
+
+
+            <div class="fieldWrapper row form-group"
+                 aria-required="{% if form.simulation_start_time.field.required %}true{% else %}false{% endif %}">
+                <div class="col-md-2">
+                    {% if form.simulation_start_time.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.simulation_start_time.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.simulation_start_time.label_tag }}
+                    {% if form.simulation_start_time.field.required %}
+                        <span class="required">*</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    {% if theid is None %}
+                        {{ form.simulation_start_time }}
+                    {% else %}
+                        {{ form.simulation_start_time|append_attr:"disabled:true" }}
+                    {% endif %}
+                </div>
+            </div>
+            {% if form.simulation_start_time.errors %}
+            <div class="col-md-12">
+                {{form.simulation_start_time.errors}}
+            </div>
+            {% endif %}
+            <div class="fieldWrapper row form-group"
+                 aria-required="{% if form.simulation_end_time.field.required %}true{% else %}false{% endif %}">
+                <div class="col-md-2">
+                    {% if form.simulation_end_time.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.simulation_end_time.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.simulation_end_time.label_tag }}
+                    {% if form.simulation_end_time.field.required %}
+                        <span class="required">*</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    {% if theid is None %}
+                        {{ form.simulation_end_time }}
+                    {% else %}
+                        {{ form.simulation_end_time|append_attr:"disabled:true" }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="fieldWrapper row form-group"
+                 aria-required="{% if form.protected.field.required %}true{% else %}false{% endif %}">
+                <div class="col-md-2">
+                    {% if form.protected.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.protected.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.protected.label_tag }}
+                    {% if form.protected.field.required %}
+                        <span class="required">*</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    {{ form.protected }}
+                </div>
+            </div>
+
+
+            <div class="row" style="margin-top:2.0rem">
+                <div class="col-12"><h2>Drifter</h2></div>
+            </div>
+            <div class="fieldWrapper row form-group"
+                 aria-required="{% if form.drifter_type.field.required %}true{% else %}false{% endif %}">
+                <div class="col-md-2">
+                    {% if form.drifter_type.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.drifter_type.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.drifter_type.label_tag }}
+                    {% if form.drifter_type.field.required %}
+                        <span class="required">*</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    {% if theid is None %}
+                        {{ form.drifter_type }}
+                    {% else %}
+                        {{ form.drifter_type|append_attr:"disabled:true" }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="fieldWrapper row form-group"
+                 aria-required="{% if form.drifter_name.field.required %}true{% else %}false{% endif %}">
+                <div class="col-md-2">
+                    {% if form.drifter_name.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.drifter_name.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.drifter_name.label_tag }}
+                    {% if form.drifter_name.field.required %}
+                        <span class="required">*</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    {% if theid is None %}
+                        {{ form.drifter_name }}
+                    {% else %}
+                        {{ form.drifter_name|append_attr:"disabled:true" }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="fieldWrapper row form-group"
+                 aria-required="{% if form.total_mass.field.required %}true{% else %}false{% endif %}">
+                <div class="col-md-2">
+                    {% if form.total_mass.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.total_mass.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.total_mass.label_tag }}
+                    {% if form.total_mass.field.required %}
+                        <span class="required">*</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    {% if theid is None %}
+                        {{ form.total_mass }}
+                    {% else %}
+                        {{ form.total_mass|append_attr:"disabled:true" }}
+                    {% endif %}
+                </div>
+            </div>
+
+
+            <div class="row" style="margin-top:2.0rem">
+                <div class="col-4"><h2>Initial conditions</h2></div>
+            </div>
+
+
+            <div class="fieldWrapper row form-group"
+                 aria-required="{% if form.geometry.field.required %}true{% else %}false{% endif %}">
+                <div class="col-md-2">
+                    {% if form.geometry.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.geometry.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.geometry.label_tag }}
+                    {% if form.geometry.field.required %}
+                        <span class="required">*</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    {% if theid is None %}
+                        {{ form.geometry }}
+                    {% else %}
+                        {{ form.geometry|append_attr:"disabled:true" }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="fieldWrapper row form-group"
+                 aria-required="{% if form.lat.field.required %}true{% else %}false{% endif %}">
+                <div class="col-md-2">
+                    {% if form.lat.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.lat.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.lat.label_tag }}
+                    {% if form.lat.field.required %}
+                        <span class="required">*</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    {% if theid is None %}
+                        {{ form.lat }}
+                    {% else %}
+                        {{ form.lat|append_attr:"disabled:true" }}
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="fieldWrapper row form-group"
+                 aria-required="{% if form.lon.field.required %}true{% else %}false{% endif %}">
+                <div class="col-md-2">
+                    {% if form.lon.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.lon.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.lon.label_tag }}
+                    {% if form.lon.field.required %}
+                        <span class="required">*</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    {% if theid is None %}
+                        {{ form.lon }}
+                    {% else %}
+                        {{ form.lon|append_attr:"disabled:true" }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="fieldWrapper row form-group"
+                 aria-required="{% if form.radius.field.required %}true{% else %}false{% endif %}">
+                <div class="col-md-2">
+                    {% if form.radius.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.radius.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.radius.label_tag }}
+                    {% if form.radius.field.required %}
+                        <span class="required">*</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    {% if theid is None %}
+                        {{ form.radius }}
+                    {% else %}
+                        {{ form.radius|append_attr:"disabled:true" }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="fieldWrapper row form-group"
+                 aria-required="{% if form.number.field.required %}true{% else %}false{% endif %}">
+                <div class="col-md-2">
+                    {% if form.number.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.number.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.number.label_tag }}
+                    {% if form.number.field.required %}
+                        <span class="required">*</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    {% if theid is None %}
+                        {{ form.number }}
+                    {% else %}
+                        {{ form.number|append_attr:"disabled:true" }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="fieldWrapper row form-group"
+                 aria-required="{% if form.release_times.field.required %}true{% else %}false{% endif %}">
+                <div class="col-md-2">
+                    {% if form.release_times.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.release_times.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.release_times.label_tag }}
+                    {% if form.release_times.field.required %}
+                        <span class="required">*</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    {% if theid is None %}
+                        {{ form.release_times }}
+                    {% else %}
+                        {{ form.release_times|append_attr:"disabled:true" }}
+                    {% endif %}
+                </div>
+            </div>
+            <!--div class="fieldWrapper row form-group"
+                 aria-required="{% if form.cone.field.required %}true{% else %}false{% endif %}">
+                <div class="col-md-2">
+                    {% if form.cone.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.cone.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.cone.label_tag }}
+                    {% if form.cone.field.required %}
+                        <span class="required">*</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    {% if action != "edit" %}
+                        {{ form.cone }}
+                    {% endif %}
+                    {% if action == "edit" %}
+                        {{ form.cone|append_attr:"disabled:true" }}
+                    {% endif %}
+                </div>
+            </div-->
+
+
+            <div class="row" style="margin-top:2.0rem">
+                <div class="col-md-4"><h2>Model set up</h2></div>
+            </div>
+            <div class="fieldWrapper row form-group"
+                 aria-required="{% if form.twoDthreeD.field.required %}true{% else %}false{% endif %}">
+                <div class="col-md-2">
+                    {% if form.twoDthreeD.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.twoDthreeD.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.twoDthreeD.label_tag }}
+                    {% if form.twoDthreeD.field.required %}
+                        <span class="required">*</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    {% if theid is None %}
+                        {{ form.twoDthreeD }}
+                    {% else %}
+                        {{ form.twoDthreeD|append_attr:"disabled:true" }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="fieldWrapper row form-group"
+                 aria-required="{% if form.beaching.field.required %}true{% else %}false{% endif %}">
+                <div class="col-md-2">
+                    {% if form.beaching.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.beaching.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.beaching.label_tag }}
+                    {% if form.beaching.field.required %}
+                        <span class="required">*</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    {% if theid is None %}
+                        {{ form.beaching }}
+                    {% else %}
+                        {{ form.beaching|append_attr:"disabled:true" }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="fieldWrapper row form-group"
+                 aria-required="{% if form.buoyancy.field.required %}true{% else %}false{% endif %}">
+                <div class="col-md-2">
+                    {% if form.buoyancy.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.buoyancy.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.buoyancy.label_tag }}
+                    {% if form.buoyancy.field.required %}
+                        <span class="required">*</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    {% if theid is None %}
+                        {{ form.buoyancy }}
+                    {% else %}
+                        {{ form.buoyancy|append_attr:"disabled:true" }}
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="fieldWrapper row form-group"
+                 aria-required="{% if form.dissolution.field.required %}true{% else %}false{% endif %}">
+                <div class="col-md-2">
+                    {% if form.dissolution.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.dissolution.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.dissolution.label_tag }}
+                    {% if form.dissolution.field.required %}
+                        <span class="required">*</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    {% if theid is None %}
+                        {{ form.dissolution }}
+                    {% else %}
+                        {{ form.dissolution|append_attr:"disabled:true" }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="fieldWrapper row form-group"
+                 aria-required="{% if form.evaporation.field.required %}true{% else %}false{% endif %}">
+                <div class="col-md-2">
+                    {% if form.evaporation.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.evaporation.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.evaporation.label_tag }}
+                    {% if form.evaporation.field.required %}
+                        <span class="required">*</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    {% if theid is None %}
+                        {{ form.evaporation }}
+                    {% else %}
+                        {{ form.evaporation|append_attr:"disabled:true" }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="fieldWrapper row form-group"
+                 aria-required="{% if form.horizontal_spreading.field.required %}true{% else %}false{% endif %}">
+                <div class="col-md-2">
+                    {% if form.horizontal_spreading.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.horizontal_spreading.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.horizontal_spreading.label_tag }}
+                    {% if form.horizontal_spreading.field.required %}
+                        <span class="required">*</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    {% if theid is None %}
+                        {{ form.horizontal_spreading }}
+                    {% else %}
+                        {{ form.horizontal_spreading|append_attr:"disabled:true" }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="fieldWrapper row form-group"
+                 aria-required="{% if form.natural_vertical_dispersion.field.required %}true{% else %}false{% endif %}">
+                <div class="col-md-2">
+                    {% if form.natural_vertical_dispersion.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.natural_vertical_dispersion.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.natural_vertical_dispersion.label_tag }}
+                    {% if form.natural_vertical_dispersion.field.required %}
+                        <span class="required">*</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    {% if theid %}
+                        {{ form.natural_vertical_dispersion|append_attr:"disabled:true" }}
+                    {% else %}
+                        {{ form.natural_vertical_dispersion }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="fieldWrapper row form-group"
+                 aria-required="{% if form.sedimentation.field.required %}true{% else %}false{% endif %}">
+                <div class="col-md-2">
+                    {% if form.sedimentation.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.sedimentation.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.sedimentation.label_tag }}
+                    {% if form.sedimentation.field.required %}
+                        <span class="required">*</span>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    {% if theid %}
+                        {{ form.sedimentation|append_attr:"disabled:true" }}
+                    {% else %}
+                        {{ form.sedimentation }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row" style="margin-top: 2rem; margin-bottom: 2rem;">
+                 <div class="col-4 mx-auto text-center">
+                     <input id="id_submit" class="btn btn-success" type="submit" value="Submit">
+                 </div>
+            </div>
+        </form>
+        {% if form.errors %}
+           <button id="error_button" type="button" class="btn btn-primary" hidden="true" data-toggle="modal"
+                   data-target="#error_modal">
+  Open Errors
+           </button>
+
+<div class="modal" id="error_modal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h4 class="modal-title">Errors in Form</h4>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+
+      <!-- Modal body -->
+      <div class="modal-body">
+        {{ form.errors }}
+      </div>
+
+      <!-- Modal footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+        {% endif %}
+    </div>
+{% endblock body_block %}
+
+{% block page_js_block %}
+    <script type="application/javascript"
+            src="{% static '/noos_viewer/vendor/moment/moment-with-locales.min.js' %}"></script>
+    <script type="application/javascript" src="{% static '/noos_viewer/js/noosdrift-form.js' %}"></script>
+{% endblock page_js_block %}

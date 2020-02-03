@@ -1,0 +1,11 @@
+{% autoescape off %}
+
+Please activate account : {{ user.username }},
+For user : {{user.email}}
+of organization : {{profile.organization}}
+who whishes to join because : {{profile.motivation}}
+
+Please click on the link below to confirm registration:
+
+https://{{ domain }}/{% url 'noos_viewer:activate' uidb64=uid token=token %}
+{% endautoescape %}

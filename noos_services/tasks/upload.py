@@ -2,23 +2,16 @@
 
 import sys
 # import pysftp
+# import paramiko
 import ftplib
 
-if sys.version_info.major != 3:
-    print("This utility is not compatible with Python v{}.{}.{}".format(sys.version_info.major, sys.version_info.minor,
-                                                                        sys.version_info.micro))
-    sys.exit(0)
+# if sys.version_info.major != 3:
+#    print("This utility is not compatible with Python v{}.{}.{}".format(sys.version_info.major, sys.version_info.minor,
+#                                                                        sys.version_info.micro))
+#    sys.exit(0)
 import getopt
-# from scp import SCPClient
-from os.path import expanduser, join, isfile, exists, abspath, split
+from os.path import isfile, abspath, split
 from os import environ
-# import paramiko
-
-
-# NOOS_SCP_USER
-# NOOS_SCP_HOST
-# NOOS_PROXY_USER
-# NOOS_PROXY_HOST
 
 
 # def _load_key(key_filename):
@@ -105,53 +98,81 @@ from os import environ
 
 
 def main(argv):
-    user = environ.get("NOOS_SFTP_USER")
-    if user is None:
-        print("No NOOS_SCP_USER defined and exported in bash environment")
-        assert user is not None
-    host = environ.get("NOOS_SFTP_HOST")
-    if host is None:
-        print("No NOOS_SCP_HOST defined and exported in bash environment")
-        assert host is not None
-    # TODO : Replace password with keyfile location (NOOS_SFTP_KEYFILE)
-    password = environ.get("NOOS_SFTP_PWD")
-    if password is None:
-        print("No NOOS_SFTP_PWD defined and exported in bash environment")
-        assert password is not None
-    # user = ""
-    # host = ""
-    # password = ""
-
-    # dest = "~/gitrepo/noosDrift/requests/"
-    dest = "Django/noosDrift/requests/"
-
-    print("Python v{}.{}.{} - NOOS-Drift Upload utility".format(sys.version_info.major, sys.version_info.minor,
-                                                                sys.version_info.micro))
-    print("-----------------------------------------")
+    log_file_name = "/tmp/test2.txt"
+    log_file = open(log_file_name, "w")
 
     file_to_upload = ''
+    host = None
+    user = None
+    password = None
+
+    # Get arguments
+    log_file.write("Starting upload of file to central\n")
     try:
-        opts, args = getopt.getopt(argv, "hi:", ["ifile="])
-    except getopt.GetoptError as exc:
-        print(exc.msg + '\nusage: upload.py -i <inputfile>')
+        opts, args = getopt.getopt(argv, "h:i:d:u:p", ["ifile="])
+    except getopt.GetoptError as exce:
+        print(exce.msg + '\nusage: upload.py -i <inputfile>')
+        log_file.write(exce.msg + '\nusage: upload.py -i <inputfile>\n')
         sys.exit(2)
 
     if not opts:
         print('No input file provided\nusage: upload.py -i <inputfile>')
+        log_file.write('No input file provided\nusage: upload.py -i <inputfile>\n')
         sys.exit(1)
 
     for opt, arg in opts:
+        print(opt)
+        print(arg)
         if opt == '-h':
             print('usage: upload.py -i <inputfile>')
+            log_file.write('usage: upload.py -i <inputfile>\n')
             sys.exit()
-        elif opt in ("-i", "--ifile"):
+        if opt in ("-i", "--ifile"):
             file_to_upload = arg
+        if opt == '-d':
+            host = arg
+        if opt == '-u':
+            user = arg
+        if opt == '-p':
+            password = arg
+
+    if user is None:
+        user = environ.get("NOOS_SFTP_USER")
+        if user is None:
+            print("No NOOS_SFTP_USER defined and exported in bash environment")
+            log_file.write("No NOOS_SFTP_USER defined and exported in bash environment\n")
+            assert user is not None
+    if host is None:
+        host = environ.get("NOOS_SFTP_HOST")
+        if host is None:
+            print("No NOOS_SFTP_HOST defined and exported in bash environment")
+            log_file.write("No NOOS_SFTP_HOST defined and exported in bash environment\n")
+            assert host is not None
+    # TODO : Replace password with keyfile location (NOOS_SFTP_KEYFILE)
+    if password is None:
+        password = environ.get("NOOS_SFTP_PWD")
+        if password is None:
+            print("No NOOS_SFTP_PWD defined and exported in bash environment\n")
+            log_file.write("No NOOS_SFTP_PWD defined and exported in bash environment\n")
+            assert password is not None
+
+    dest = "noosdrift"
+
+    print("Python v{}.{}.{} - NOOS-Drift Upload utility".format(sys.version_info.major, sys.version_info.minor,
+                                                                sys.version_info.micro))
+    log_file.write("Python v{}.{}.{} - NOOS-Drift Upload utility\n".format(sys.version_info.major,
+                                                                           sys.version_info.minor,
+                                                                           sys.version_info.micro))
+    print("-----------------------------------------")
+    log_file.write("-----------------------------------------\n")
 
     if not isfile(file_to_upload):
         print('The file "' + file_to_upload + '" does not exist.')
+        log_file.write('The file "{}" does not exist.\n'.format(file_to_upload))
         sys.exit(2)
 
-    print('File to upload is: "' + file_to_upload + '"')
+    print('File to upload is: "{}"'.format(file_to_upload))
+    log_file.write('File to upload is: "{}"\n'.format(file_to_upload))
     src = abspath(file_to_upload)
     path, filename = split(src)
     # secure_copy(user, host, src, dest, key_filename="")
@@ -161,11 +182,33 @@ def main(argv):
     #     with sftp.cd(dest):  # temporarily chdir to test_sftp
     #        sftp.put(src)  # upload file to public/ on remote
 
-    with ftplib.FTP(host, user, password) as session:
-        with open(src, 'rb') as file:
-            # session.cwd(dest)
-            session.storbinary("STOR {}".format(filename), file)
+    try:
+        log_file.write("Trying to upload file \'{}\'\n".format(file_to_upload))
+        with ftplib.FTP(host, user, password) as session:
+            with open(src, 'rb') as result_archive:
+                if dest != '':
+                    session.cwd(dest)
+                session.storbinary("STOR {}".format(filename), result_archive)
+        log_file.write("Upload of file \'{}\' OK\n".format(file_to_upload))
+    except ftplib.all_errors as ftperrs:
+        log_file.write("Error {} uploading file \'{}\'\n".format(ftperrs, file_to_upload))
+        raise ftperrs
+    except Exception as otherexc:
+        log_file.write("Error {} uploading file \'{}\'\n".format(otherexc, file_to_upload))
+        raise otherexc
+    finally:
+        log_file.close()
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    file_name = "/tmp/test.txt"
+    file = open(file_name, "w")
+    file.write("test")
+
+    try:
+        main(sys.argv[1:])
+    except Exception as exc:
+        file.write("{}\n".format(exc))
+        sys.exit(2)
+    finally:
+        file.close()

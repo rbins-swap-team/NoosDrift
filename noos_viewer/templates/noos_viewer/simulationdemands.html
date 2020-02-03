@@ -1,0 +1,95 @@
+{% extends 'noos_viewer/base.html' %}
+
+{% block title %}Simulations list{% endblock %}
+
+{% block body_block %}
+    <div class="container top-content">
+        <div class="row">
+            <div class="col-12">
+                <h2>Simulations list, number of records : {{ num_rec }}
+                    <span style="display: inline" class="float-right">
+                    <a href="{% url 'noos_viewer:new_simulationdemand' %}" class="btn btn-outline-success"
+                       role="button" data-toggle="tooltip" data-placement="bottom"
+                       title="New simulation">
+                        <i class="material-icons" style="vertical-align: middle;">add_circle_outline</i>
+                    </a>
+                </span>
+                </h2>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12"><br></div>
+        </div>
+        {% for asimulation in simulations %}
+            <div class="row">
+                <div class="col-12">
+                    <span style="font-style:italic">Title : <b>{{ asimulation.title }}</b></span>
+                    <span class="float-right">
+                        {% if asimulation.status == 'OK' %}
+                        <a href="{% url 'noos_viewer:viewresults_simulationdemand' asimulation.id %}"
+                           class="btn btn-outline-info"
+                           role="button"
+                           data-toggle="tooltip"
+                           data-placement="bottom"
+                           title="View results">
+                            <i class="material-icons" style="vertical-align: middle;font-size: 1rem;">remove_red_eye</i>
+                        </a>
+                        {% if asimulation.zipurl %}
+                        <a href="{{asimulation.zipurl}}" class="btn btn-outline-info"
+                           role="button"
+                           data-toggle="tooltip"
+                           data-placement="bottom"
+                           title="Download">
+                            <i class="material-icons" style="vertical-align: middle;font-size: 1rem;">get_app</i>
+                        </a>
+                        {% endif %}
+                        {% endif %}
+                        <a href="{% url 'noos_viewer:view_simulationdemand' simulationid=asimulation.id %}"
+                           class="btn btn-outline-info"
+                           role="button"
+                           data-toggle="tooltip"
+                           data-placement="bottom"
+                           title="View Demand">
+                            <i class="material-icons" style="vertical-align: middle;font-size: 1rem;">assignment_turned_in</i>
+                        </a>
+                        <a href="{% url 'noos_viewer:protect_simulationdemand' asimulation.id %}"
+                           class="btn btn-outline-warning" role="button" data-toggle="tooltip"
+                           data-placement="bottom"
+                           title="Prevent deletion">
+                            <i class="material-icons" style="vertical-align: middle;font-size: 1rem;">lock_open</i>
+                        </a>
+                        <a href="{% url 'noos_viewer:newfrommodel_simulationdemand' asimulation.id %}"
+                           class="btn btn-outline-primary" role="button" data-toggle="tooltip"
+                           data-placement="bottom"
+                           title="Create a new simulation based on this one">
+                            <i class="material-icons" style="vertical-align: middle;font-size: 1rem;">file_copy</i>
+                        </a>
+                        <a href="{% url 'noos_viewer:edit_simulationdemand' asimulation.id %}"
+                           class="btn btn-outline-dark" role="button" data-toggle="tooltip" data-placement="bottom"
+                           title="Edit simulation detail">
+                            <i class="material-icons" style="vertical-align: middle;font-size: 1rem;">edit</i>
+                        </a>
+                    </span>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <span style="font-style:italic">Created time :</span> {{ asimulation.created_time }}
+                </div>
+                <div class="col-12">
+                    <span style="font-style:italic">Username :</span> {{ asimulation.username }}
+                </div>
+                <div class="col-12">
+                    <span style="font-style:italic">Tags :</span> {{ asimulation.tags }}
+                </div>
+                <div class="col-12">
+                    <span style="font-style:italic">Simulation ID :</span> {{ asimulation.id }}
+                </div>
+                <div class="col-12">
+                    <span style="font-style:italic">Uploaded Results :</span> {{ asimulation.countuploadmessages }}
+                </div>
+            </div>
+            <hr/>
+        {% endfor %}
+    </div>
+{% endblock %}

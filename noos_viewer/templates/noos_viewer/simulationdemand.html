@@ -1,0 +1,526 @@
+{% extends 'noos_viewer/base.html' %}
+
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Simulation Demand {{ form.id.value|default_if_none:"" }}{% endblock %}
+
+{% block body_block %}
+    <div class="container top-content">
+        <div class="row">
+            <div class="col-5"><h2>Simulation description</h2></div>
+            <div class="col-7">
+                    <span class="float-right">
+                        <a class="btn btn-primary" href="{% url 'noos_viewer:simulationdemands' %}"
+                                   role="button">
+                                    <i class="fas fa-list-ol"></i>&nbsp;All Simulations
+                        </a>
+                        <a href="{% url 'noos_viewer:new_simulationdemand' %}" class="btn btn-outline-success"
+                           role="button" data-toggle="tooltip" data-placement="bottom"
+                           title="New simulation">
+                           <i class="material-icons" style="vertical-align: middle;">add_circle_outline</i>
+                        </a>
+                        {% if sim_status == 'OK' %}
+                        <a href="{% url 'noos_viewer:viewresults_simulationdemand' theid %}" class="btn btn-outline-info"
+                           role="button"
+                           data-toggle="tooltip"
+                           data-placement="bottom"
+                           title="View results">
+                            <i class="material-icons" style="vertical-align: middle;font-size: 1rem;">remove_red_eye</i>
+                        </a>
+                        {% if zipurl %}
+                        <a href="{{zipurl}}" class="btn btn-outline-info"
+                           role="button"
+                           data-toggle="tooltip"
+                           data-placement="bottom"
+                           title="Download">
+                            <i class="material-icons" style="vertical-align: middle;font-size: 1rem;">get_app</i>
+                        </a>
+                        {% endif %}
+                        {% endif %}
+                        <a href="{% url 'noos_viewer:protect_simulationdemand' theid %}"
+                           class="btn btn-outline-warning" role="button" data-toggle="tooltip"
+                           data-placement="bottom"
+                           title="Prevent deletion">
+                            <i class="material-icons" style="vertical-align: middle;font-size: 1rem;">lock_open</i>
+                        </a>
+                        <a href="{% url 'noos_viewer:newfrommodel_simulationdemand' theid %}"
+                           class="btn btn-outline-primary" role="button" data-toggle="tooltip"
+                           data-placement="bottom"
+                           title="Create a new simulation based on this one">
+                            <i class="material-icons" style="vertical-align: middle;font-size: 1rem;">file_copy</i>
+                        </a>
+                        <a href="{% url 'noos_viewer:edit_simulationdemand' theid %}"
+                           class="btn btn-outline-dark" role="button" data-toggle="tooltip" data-placement="bottom"
+                           title="Edit simulation detail">
+                            <i class="material-icons" style="vertical-align: middle;font-size: 1rem;">edit</i>
+                        </a>
+                    </span>
+            </div>
+        </div>
+        <div class="fieldWrapper form-group row">
+            <div class="col-md-2">
+                    {% if form.id.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.id.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.id.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.id|append_attr:"disabled:true" }}
+            </div>
+        </div>
+        <div class="fieldWrapper form-group row">
+            <div class="col-md-2">
+                    {% if form.created_time.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.created_time.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.created_time.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.created_time|append_attr:"disabled:true" }}
+            </div>
+        </div>
+
+
+        <div class="fieldWrapper form-group row">
+            <div class="col-md-2">
+                    {% if form.title.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.title.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.title.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.title|append_attr:"disabled:true" }}
+            </div>
+        </div>
+
+
+
+
+
+         <div class="fieldWrapper form-group row">
+            <div class="col-md-2">
+                    {% if form.simulation_type.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.simulation_type.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.simulation_type.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.simulation_type|append_attr:"disabled:true" }}
+            </div>
+        </div>
+
+
+
+
+
+
+        <div class="fieldWrapper form-group row">
+            <div class="col-md-2">
+                    {% if form.summary.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.summary.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.summary.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.summary|append_attr:"disabled:true" }}
+            </div>
+        </div>
+         <div class="fieldWrapper form-group row">
+            <div class="col-md-2">
+                    {% if form.status.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.status.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.status.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.status|append_attr:"disabled:true" }}
+            </div>
+        </div>
+        <div class="fieldWrapper form-group row">
+            <div class="col-md-2">
+                    {% if form.tags.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.tags.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.tags.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.tags|append_attr:"disabled:true" }}
+            </div>
+        </div>
+
+
+        <div class="fieldWrapper form-group row">
+            <div class="col-md-2">
+                    {% if form.simulation_start_time.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.simulation_start_time.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.simulation_start_time.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.simulation_start_time|append_attr:"disabled:true" }}
+            </div>
+        </div>
+        <div class="fieldWrapper form-group row">
+            <div class="col-md-2">
+                    {% if form.simulation_end_time.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.simulation_end_time.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.simulation_end_time.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.simulation_end_time|append_attr:"disabled:true" }}
+            </div>
+        </div>
+        <div class="fieldWrapper form-group row">
+            <div class="col-md-2">
+                    {% if form.protected.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.protected.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.protected.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.protected|append_attr:"disabled:true" }}
+            </div>
+        </div>
+
+
+        <div class="row" style="margin-top:2.0rem">
+            <div class="col-4"><h2>Drifter</h2></div>
+        </div>
+        <div class="fieldWrapper form-group row">
+            <div class="col-md-2">
+                    {% if form.drifter_type.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.drifter_type.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.drifter_type.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.drifter_type|append_attr:"disabled:true" }}
+            </div>
+        </div>
+        <div class="fieldWrapper form-group row">
+            <div class="col-md-2">
+                    {% if form.drifter_name.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.drifter_name.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.drifter_name.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.drifter_name|append_attr:"disabled:true" }}
+            </div>
+        </div>
+        <div class="fieldWrapper form-group row">
+            <div class="col-md-2">
+                    {% if form.total_mass.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.total_mass.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.total_mass.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.total_mass|append_attr:"disabled:true" }}
+            </div>
+        </div>
+
+
+        <div class="row" style="margin-top:2.0rem">
+            <div class="col-4"><h2>Initial conditions</h2></div>
+        </div>
+
+        <div class="fieldWrapper form-group row">
+            <div class="col-md-2">
+                    {% if form.geometry.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.geometry.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.geometry.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.geometry|append_attr:"disabled:true" }}
+            </div>
+        </div>
+        <div class="fieldWrapper form-group row">
+            <div class="col-md-2">
+                    {% if form.lat.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.lat.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.lat.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.lat|append_attr:"disabled:true" }}
+            </div>
+        </div>
+        <div class="fieldWrapper form-group row">
+            <div class="col-md-2">
+                    {% if form.lon.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.lon.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.lon.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.lon|append_attr:"disabled:true" }}
+            </div>
+        </div>
+        <div class="fieldWrapper form-group row">
+            <div class="col-md-2">
+                    {% if form.radius.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.radius.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.radius.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.radius|append_attr:"disabled:true" }}
+            </div>
+        </div>
+        <div class="fieldWrapper form-group row">
+            <div class="col-md-2">
+                    {% if form.number.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.number.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.number.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.number|append_attr:"disabled:true" }}
+            </div>
+        </div>
+        <div class="fieldWrapper form-group row">
+            <div class="col-md-2">
+                    {% if form.release_times.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.release_times.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.release_times.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.release_times|append_attr:"disabled:true" }}
+            </div>
+        </div>
+
+
+        <div class="row" style="margin-top:2.0rem">
+            <div class="col-4"><h2>Model set up</h2></div>
+        </div>
+        <div class="fieldWrapper form-group row" >
+            <div class="col-md-2">
+                    {% if form.twoDthreeD.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.twoDthreeD.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.twoDthreeD.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.twoDthreeD|append_attr:"disabled:true" }}
+            </div>
+        </div>
+        <div class="fieldWrapper form-group row" >
+            <div class="col-md-2">
+                    {% if form.beaching.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.beaching.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.beaching.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.beaching|append_attr:"disabled:true" }}
+            </div>
+        </div>
+        <div class="fieldWrapper form-group row" >
+            <div class="col-md-2">
+                    {% if form.buoyancy.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.buoyancy.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.buoyancy.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.buoyancy|append_attr:"disabled:true" }}
+            </div>
+        </div>
+        <div class="fieldWrapper form-group row" >
+            <div class="col-md-2">
+                    {% if form.current.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.current.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.current.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.current|append_attr:"disabled:true" }}
+            </div>
+        </div>
+        <div class="fieldWrapper form-group row" >
+            <div class="col-md-2">
+                    {% if form.dissolution.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.dissolution.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.dissolution.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.dissolution|append_attr:"disabled:true" }}
+            </div>
+        </div>
+        <div class="fieldWrapper form-group row" >
+            <div class="col-md-2">
+                    {% if form.evaporation.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.evaporation.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.evaporation.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.evaporation|append_attr:"disabled:true" }}
+            </div>
+        </div>
+        <div class="fieldWrapper form-group row" >
+            <div class="col-md-2">
+                    {% if form.horizontal_spreading.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.horizontal_spreading.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.horizontal_spreading.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.horizontal_spreading|append_attr:"disabled:true" }}
+            </div>
+        </div>
+        <div class="fieldWrapper form-group row" >
+            <div class="col-md-2">
+                    {% if form.natural_vertical_dispersion.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.natural_vertical_dispersion.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.natural_vertical_dispersion.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.natural_vertical_dispersion|append_attr:"disabled:true" }}
+            </div>
+        </div>
+        <div class="fieldWrapper form-group row" >
+            <div class="col-md-2">
+                    {% if form.sedimentation.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.sedimentation.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.sedimentation.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.sedimentation|append_attr:"disabled:true" }}
+            </div>
+        </div>
+        <div class="fieldWrapper form-group row" >
+            <div class="col-md-2">
+                    {% if form.waves.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.waves.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.waves.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.waves|append_attr:"disabled:true" }}
+            </div>
+        </div>
+        <div class="fieldWrapper form-group row" >
+            <div class="col-md-2">
+                    {% if form.wind.help_text %}
+                        <span class="help align-middle" data-toggle="tooltip" data-placement="bottom"
+                              title="{{ form.wind.help_text|safe }}">
+                            <i class="material-icons">help</i>
+                        </span>
+                    {% endif %}
+                    {{ form.wind.label_tag }}
+            </div>
+            <div class="col-md-10">
+                    {{ form.wind|append_attr:"disabled:true" }}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block page_js_block %}
+    <script type="text/javascript">
+    $( document ).ready(function() {
+        // disable tag inputs
+        let allTagBadge = $('.bootstrap-tagsinput > span.badge');
+        $('.bootstrap-tagsinput > span.badge > span').remove();
+        $('.bootstrap-tagsinput > input').remove();
+        allTagBadge.removeClass('badge-info');
+        allTagBadge.addClass('badge-secondary');
+    });
+    </script>
+{% endblock %}

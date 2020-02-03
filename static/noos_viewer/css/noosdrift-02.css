@@ -1,0 +1,105 @@
+.copernic_logo {
+    padding: 2%;
+    margin-bottom: -50%;
+    background-color: #fff;
+    border-radius: 50%;
+    border-bottom: 1px solid #d9d9d9
+}
+
+.btn-circle.btn-lg {
+    width: 56px;
+    height: 56px;
+    border-radius: 28px;
+    padding-left: 6px;
+    padding-right: 6px;
+    margin: 6px 8px;
+    box-shadow: rgba(0, 0, 0, 0.26) 0 2px 5px 0;
+    box-sizing: border-box;
+    /*font-size: 36px !important;*/
+    /*line-height: 1.33;*/
+}
+
+.btn-circle.btn-lg i {
+    margin-right: 0;
+    padding: 7px;
+}
+
+.map_overlay_nav {
+    position: absolute;
+    height: 68px;
+    left: 15px;
+    bottom: 0;
+    width: calc(100% - 30px);
+}
+
+.map_overlay_layers {
+    position: absolute;
+    height: 100%;
+    right: 15px;
+    top: 0;
+    background: aliceblue;
+}
+
+/*hide old control layer container*/
+div.leaflet-top.leaflet-right > .leaflet-control-layers {
+    display: none;
+}
+
+.table-row-all td,
+.table-row-mme td {
+    border: 1px solid #dee2e6 !important;
+    color: #212529;
+}
+
+
+th.rotate {
+    /* Something you can count on */
+    height: 140px;
+    white-space: nowrap;
+}
+
+th.rotate > div {
+    transform: /* Magic Numbers */ translate(25px, 51px) /* 45 is really 360 - 45 */ rotate(315deg);
+    width: 30px;
+}
+
+th.rotate > div > span {
+    border-bottom: 1px solid #ccc;
+    padding: 5px 10px;
+}
+
+.map-buttons-bottom {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    margin: 0 auto;
+    right: 370px;
+    text-align: center;
+    z-index: 1000;
+}
+
+
+
+
+
+
+.row.form-group > div > label,
+.row.form-group > div > span.help
+{
+    padding-top: calc(0.375rem + 1px);
+    padding-bottom: calc(0.375rem + 1px);
+    margin-bottom: 0;
+    font-size: inherit;
+    line-height: 1.5;
+}
+
+.row.form-group > div > span.help > i
+{
+    font-size: inherit;
+}
+
+.captcha
+{
+    height: 50px;
+}
+

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+
+{% load static %}
+<html class="no-js" lang="en">
+<head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-89067518-5"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-89067518-5');
+    </script>
+    <meta charset="utf-8"/>
+    <title>{% block title %}NOOS-Drift base page{% endblock %}</title>
+
+    <meta name="description" content=""/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+    <link rel="shortcut icon" href="{% static 'favicon.ico' %}" />
+
+    {# Global stylesheets #}
+    <link rel="stylesheet" type="text/css" href="{% static 'noos_viewer/vendor/fontawesome-free/css/all.min.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'noos_viewer/vendor/tagsinput/tagsinput.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'noos_viewer/css/noosdrift.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'noos_viewer/css/noosdrift-02.css' %}">
+    {% block page_css_block %}{% endblock %}
+
+</head>
+<body class="{% block body_class %}{% endblock %}">
+<header>
+    <div class="container">
+        <div class="row">
+            <div class="col-4 align-self-center">
+                <a href="http://noos.eurogoos.eu/">
+                    <img alt="NOOS logo" src='{% static "noos_viewer/images/noos_logo.png" %}'
+                         class="img-fluid mx-auto d-block float-left">
+                </a>
+            </div>
+            <div class="col-4">
+                <img alt="Copernicus logo" id="copernicus-logo" src='{% static "noos_viewer/images/EUR-NW-SHELF-67-DEM4-L5.png" %}'
+                     class="copernic_logo img-fluid mx-auto d-block">
+            </div>
+            <div class="col-4 align-self-center text-center">
+                {% if user.is_authenticated %}
+                    <div class="btn-group float-right" role="group" aria-label="Botton basic">
+                        <a class="btn btn-danger" href="{% url 'logout' %}" role="button">
+                            <i class="fas fa-sign-out-alt"></i>&nbsp;Log out
+                        </a>
+                        <a href="{% url 'noos_viewer:contactform' %}" class="btn btn-warning" role="button">
+                            <i class="material-icons" style="font-size: 1rem;vertical-align: middle;padding-bottom: 3px;">contact_mail</i>&nbsp;Contact
+                        </a>
+                        <a href="https://odnature.naturalsciences.be/noosdrift/" class="btn btn-info" role="button">
+                            <i class="material-icons" style="font-size: 1rem;vertical-align: middle;padding-bottom: 3px;">format_list_bulleted</i>&nbsp;Web Site
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="btn-group float-right" role="group" aria-label="Bottons_forall">
+                        <a href="{% url 'noos_viewer:contactform' %}" class="btn btn-warning" role="button">
+                             <i class="material-icons" style="font-size: 1rem;vertical-align: middle;padding-bottom: 3px;">contact_mail</i>&nbsp;Contact
+                        </a>
+                        <a href="https://odnature.naturalsciences.be/noosdrift/" class="btn btn-info" role="button">
+                            <i class="material-icons" style="font-size: 1rem;vertical-align: middle;padding-bottom: 3px;">format_list_bulleted</i>&nbsp;Web Site
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</header>
+
+{% block body_block %}{% endblock %}
+
+{# Global javascript #}
+<script type="application/javascript" src="{% static '/noos_viewer/vendor/popper.js/umd/popper-utils.min.js' %}"></script>
+<script type="application/javascript" src="{% static '/noos_viewer/vendor/popper.js/umd/popper.min.js' %}"></script>
+<script type="application/javascript" src="{% static '/noos_viewer/vendor/jquery/jquery.min.js' %}"></script>
+<script type="application/javascript" src="{% static '/noos_viewer/vendor/jquery-validation/jquery.validate.min.js' %}"></script>
+<script type="application/javascript" src="{% static '/noos_viewer/vendor/jquery-validation/additional-methods.min.js' %}"></script>
+<script type="application/javascript" src="{% static '/noos_viewer/vendor/bootstrap/js/bootstrap.min.js' %}"></script>
+<script type="application/javascript" src="{% static '/noos_viewer/vendor/tagsinput/tagsinput.js' %}"></script>
+<script type="application/javascript" src="{% static '/noos_viewer/js/theme.min.js' %}"></script>
+
+{# Extra js #}
+{% block page_js_block %}{% endblock %}
+
+</body>
+</html>

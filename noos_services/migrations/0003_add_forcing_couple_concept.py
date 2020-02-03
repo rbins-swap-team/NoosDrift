@@ -5,7 +5,6 @@ import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('noos_services', '0002_add_use_type_to_forcings'),
     ]
@@ -15,9 +14,12 @@ class Migration(migrations.Migration):
             name='ForcingCouple',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('meteorological', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='couple_b', to='noos_services.Forcing')),
-                ('node', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='forcing_couples', to='noos_services.Node')),
-                ('oceanical', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='couple_a', to='noos_services.Forcing')),
+                ('meteorological', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE,
+                                                     related_name='couple_b', to='noos_services.Forcing')),
+                ('node', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE,
+                                           related_name='forcing_couples', to='noos_services.Node')),
+                ('oceanical', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE,
+                                                related_name='couple_a', to='noos_services.Forcing')),
             ],
         ),
     ]

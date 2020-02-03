@@ -8,7 +8,6 @@ https://docs.djangoproject.com/en/2.1/howto/deployment/wsgi/
 """
 
 import os
-from whitenoise import WhiteNoise
 from django.core.wsgi import get_wsgi_application
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -18,8 +17,10 @@ if os.path.isfile('/etc/apache2/Django_env_vars/noosdrift.py'):
     exec(open('/etc/apache2/Django_env_vars/noosdrift.py').read())
 elif os.path.isfile('/opt/noosdrift/Django_env_vars/noosdrift.py'):
     exec(open('/opt/noosdrift/Django_env_vars/noosdrift.py').read())
+elif os.path.isfile('/var/opt/noosdrift/Django_env_vars/noosdrift.py'):
+    exec(open('/var/opt/noosdrift/Django_env_vars/noosdrift.py').read())
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'noosDrift.settings')
+# os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'noosDrift.settings')
+os.environ["DJANGO_SETTINGS_MODULE"] = "noosDrift.settings"
 
 application = get_wsgi_application()
-application = WhiteNoise(application, root=os.path.join(BASE_DIR, 'static'), prefix='/noosdrift/api/static/')

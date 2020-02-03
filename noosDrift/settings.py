@@ -11,25 +11,45 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 import datetime
 import os
+from requests.compat import urljoin
+import socket
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+try:
+    HOSTNAME = socket.gethostname()
+except OSError as oserr:
+    HOSTNAME = 'localhost'
+
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 CENTRAL_ROLE = "Central"
 NODE_ROLE = "Node"
 
+NOOS_CENTRAL_ID = "NOOS_CENTRAL_ID"
+NOOS_DEV = "DEV"
+NOOS_ENV = "NOOS_ENV"
+NOOS_MME_ID = "NOOS_MME_ID"
+NOOS_MME_MODEL = "NOOS_MME_MODEL"
 NOOS_NODE_ID = "NOOS_NODE_ID"
+NOOS_PROD = "PROD"
+NOOS_ROLE = "NOOS_ROLE"
+NOOS_MME_CMD = ['python', './mme_code/noos-mme.py', '-i']
+NOOS_MAPS_CMD = ['python', '/var/opt/noosdrift/Django/noosDrift/maps_code/copyMaps.py']
+NOOS_NODE_PREPROCESSING_CMD = ['ssh', 'optos_v2_test@192.168.37.106', './cronrun', 'python3',
+                               '/home/optos_v2_test/oserit/applications/noosdrift/procs/oserit_preproc.py']
+
+# TODO replace with command to execute model software
+NOOS_NODE_MODEL_CMD = ['ssh', 'optos_v2_test@192.168.37.106', './cronrun', 'python3',
+                       '/home/optos_v2_test/oserit/applications/noosdrift/procs/oserit_proc.py']
+NOOS_NODE_POSTPROCESSING_CMD = ['ssh', 'optos_v2_test@192.168.37.106', './cronrun', 'python3',
+                                '/home/optos_v2_test/oserit/applications/noosdrift/procs/oserit_postproc.py']
 NOOS_USERNAME = "NOOS_USERNAME"
 NOOS_USERPWD = "NOOS_USERPWD"
-NOOS_ROLE = "NOOS_ROLE"
-NOOS_CENTRAL = "NOOS_CENTRAL"
-# NOOS_SFTP_USER = ""
-# NOOS_SFTP_HOST = ""
-# NOOS_SFTP_PWD = ""
-# NOOS_SFTP_KEYFILE = None
+NOOS_FTPDIR = os.path.join(BASE_DIR, 'requests')
 
-ENV_VARS = (NOOS_NODE_ID, NOOS_USERNAME, NOOS_USERPWD, NOOS_ROLE, NOOS_CENTRAL)
+ENV_VARS = (NOOS_NODE_ID, NOOS_USERNAME, NOOS_USERPWD, NOOS_ROLE, NOOS_CENTRAL_ID, NOOS_ENV)
 
 ENV_DICT = {}
 
@@ -37,34 +57,67 @@ ENV_DICT = {}
 for env_var_name in ENV_VARS:
     env_value = os.environ.get(env_var_name)
     if env_value is None:
-        print("No {} defined and exported in bash environment".format(env_var_name))
-        assert env_value is not None, "No {} defined and exported in bash environment".format(env_var_name)
+        msg = "No {} defined and exported in bash environment".format(env_var_name)
+        print(msg)
+        assert env_value is not None, msg
+    elif env_value in ["false", "False"]:
+        env_value = bool(False)
+    elif env_value in ["true", "True"]:
+        env_value = bool(True)
+    elif env_var_name in [NOOS_CENTRAL_ID, NOOS_NODE_ID]:
+        env_value = int(env_value)
 
     ENV_DICT[env_var_name] = env_value
 
 NOOS_USER = {"username": ENV_DICT[NOOS_USERNAME], "pwd": ENV_DICT[NOOS_USERPWD]}
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
+mme_env_value = os.environ.get(NOOS_MME_ID)
+if mme_env_value is not None:
+    ENV_DICT[NOOS_MME_ID] = int(mme_env_value)
+    if ENV_DICT[NOOS_MME_ID] == ENV_DICT[NOOS_NODE_ID]:
+        ENV_DICT[NOOS_MME_MODEL] = 4
 
-# URL the API schema should give
-SCHEMA_URL = 'http://nameofcentralmachine:8000/'
+# Settings for a Node
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    }
+}
+
+# Quick-start development settings - unsuitable for production
+# See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
+
+# Base URL des machines noos-drift chez les partenaires
+BASE_URL = '/api/'
+
+SCHEMA_URL = ""
+schema_dict = {
+    'nomDeMachine': 'https://versMachine'
+}
+
+SCHEMA_URL = urljoin(schema_dict[HOSTNAME], BASE_URL)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get("NOOS_SECRET_KEY")
 if SECRET_KEY is None:
-    print("No NOOS_SECRET_KEY defined and exported in bash environment")
-    assert SECRET_KEY is not None, "No NOOS_SECRET_KEY defined and exported in bash environment"
+    msg = "No NOOS_SECRET_KEY defined and exported in bash environment"
+    print(msg)
+    assert SECRET_KEY is not None, msg
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
+if NOOS_DEV == ENV_DICT[NOOS_ENV]:
+    DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'yourmachinename']
+ALLOWED_HOSTS = ['nomDeMachine', 'odnature.naturalsciences.be', 'localhost', '127.0.0.1']
+
+CAPTCHA_CHALLENGE_FUNCT = 'captcha.helpers.math_challenge'
 
 # Application definition
 
 INSTALLED_APPS = [
-    'whitenoise.runserver_nostatic',
+    'captcha',
     'noos_services.apps.NoosServicesConfig',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -78,7 +131,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -108,18 +160,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'noosDrift.wsgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/2.1/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
-}
-
 # Password validation
-# https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
+# https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -137,7 +179,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Internationalization
-# https://docs.djangoproject.com/en/2.1/topics/i18n/
+# https://docs.djangoproject.com/en/2.2/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
 
@@ -150,24 +192,24 @@ USE_L10N = True
 USE_TZ = True
 
 TEMPLATE_DIRS = (os.path.join(BASE_DIR, 'templates'),)
-TEMPLATE_URL = '/noosdrift/api/templates/'
+TEMPLATE_URL = urljoin(BASE_URL, 'templates/')
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/2.1/howto/static-files/
-
-# in order to copy statics of different plugins to  /static/ directory
-# python manage.py collectstatic
+# https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_DIR = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = [STATIC_DIR, ]
-STATIC_URL = '/noosdrift/api/static/'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+STATIC_URL = urljoin(BASE_URL, 'static/')
 
 MEDIA_DIR = os.path.join(BASE_DIR, 'media')
 MEDIA_ROOT = MEDIA_DIR
-MEDIA_URL = '/noosdrift/api/media/'
+MEDIA_URL = urljoin(BASE_URL, 'media/')
 
+# The dir where simulation data is sent by the Nodes
 REQUESTS_DIR = os.path.join(BASE_DIR, 'requests')
+
+# The dir where the analysis will be performed
+NOOS_RESULTS_DIR = os.path.join(BASE_DIR, 'results')
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
@@ -216,6 +258,10 @@ JWT_AUTH = {
 REST_USE_JWT = True
 
 LOGS_DIR = os.path.join(BASE_DIR, 'logs')
+
+LOGIN_REDIRECT_URL = 'home'
+LOGOUT_REDIRECT_URL = 'home'
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -272,31 +318,52 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
+        'noos_viewer.models': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'noos_viewer.views': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'noos_viewer.helper': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'noos_viewer.forms': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
     },
 }
 
 ACTIVE_NODES = {}
 
+APPUSERS_GROUP = 'appusers'
+
 NOOS_ERROR_CODES = {
     0: ("Model simulation successfully completed (no error)", "FORCING-PROCESSED"),
-    1: ("initial position out of model domain", "FORCING-ERROR"),
-    2: ("initial position on land", "FORCING-ERROR"),
-    3: ("Simulation start and/or end time are not in the forcing availability period \
-       [today – 4 days, today + 4 days]", "FORCING-ERROR"),
-    4: ("Release time of Lagrangian particle out of the simulation start time and end time windows",
-        "FORCING-ERROR"),
+    1: ("Initial position out of model domain", "FORCING-ERROR"),
+    2: ("Initial position on land", "FORCING-ERROR"),
+    3: ("Simulation start and/or end time are not in the forcing availability period  [today – 4 days, today + 4 days]", "FORCING-ERROR"),
+    4: ("Release time of Lagrangian particle out of the simulation start time and end time windows", "FORCING-ERROR"),
     5: ("Drifter type unknown or not available in the model", "FORCING-ERROR"),
     6: ("Model cannot handle the requested set-up -> set-up has been adapted", "FORCING-ERROR"),
-    7: ("any other error in the model pre-processing", "FORCING-ERROR"),
-    8: ("any error in the model processing", "FORCING-ERROR"),
-    9: ("any error in the model post-processing : preparation of the model output", "FORCING-ERROR")
+    7: ("Any other error in the model pre-processing", "FORCING-ERROR"),
+    8: ("Any other error in the model processing", "FORCING-ERROR"),
+    9: ("Any other error in the model post-processing : preparation of the model output", "FORCING-ERROR")
 }
 
 # Celery settings
 BROKER_URL = os.environ.get("NOOS_BROKER_URL")
 if BROKER_URL is None:
-    print("No NOOS_BROKER_URL defined and exported in bash environment")
-    assert BROKER_URL is not None, "No NOOS_BROKER_URL defined and exported in bash environment"
+    msg = "No NOOS_BROKER_URL defined and exported in bash environment"
+    print(msg)
+    assert BROKER_URL is not None, msg
 CELERY_RESULT_BACKEND = 'rpc://'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
@@ -304,7 +371,7 @@ CELERY_RESULT_SERIALIZER = 'json'
 
 # Security settings
 # Only with certificate
-if DEBUG is False:
+if DEBUG is False and HOSTNAME in ['noos-drift-a-01', 'odin']:
     SECURE_SSL_REDIRECT = True
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True

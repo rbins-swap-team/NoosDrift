@@ -1,0 +1,22 @@
+{% extends 'noos_viewer/base.html' %}
+
+{% block title %}Error Page{% endblock %}
+
+{% block body_block %}
+    <div class="container top-content">
+        <div class="container top-content">
+            <div class="d-flex justify-content-center mb-3">
+                <div class="p-2">
+                    <div class="card" style="padding: 5px 1rem 1rem;">
+                        <h2>Error Page</h2>
+                        <div class="row">
+                            <div class="col">
+                                {{ err_mesg }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

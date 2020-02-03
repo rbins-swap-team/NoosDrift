@@ -1,12 +1,275 @@
 from django.db import models
+import copy
 import coreapi
+import datetime as dt
 import glob
 import json
 import jsonfield
 import logging
+import pytz
+from noos_services.ns_const import MemorySimulationDemand, OtherConst, StatusConst
+from noos_services.validationhelper import ValidationHelper as VHelper
 from noosDrift.settings import ACTIVE_NODES
+from rest_framework.serializers import ValidationError
 
 logger = logging.getLogger(__name__)
+
+
+def validating_simulation_type(json_data):
+    logger.info("SimulationDemand validating_drifter_type, start")
+    sim_desc = json_data[MemorySimulationDemand.SIMULATION_DESCRIPTION]
+
+    listkeys = sim_desc.keys()
+    if MemorySimulationDemand.SIMULATION_TYPE not in listkeys:
+        raise ValidationError("No '{}' in '{}' part".format(MemorySimulationDemand.SIMULATION_TYPE,
+                                                            MemorySimulationDemand.SIMULATION_DESCRIPTION))
+
+    VHelper.validating_simulation_type(sim_desc[MemorySimulationDemand.SIMULATION_TYPE])
+    logger.info("SimulationDemand validating_drifter_type, ok")
+
+
+def validating_start_time(json_data):
+    logger.info("SimulationDemand validating_start_time, start")
+
+    sim_desc = json_data[MemorySimulationDemand.SIMULATION_DESCRIPTION]
+
+    listkeys = sim_desc.keys()
+    if MemorySimulationDemand.SIMULATION_START_TIME not in listkeys:
+        raise ValidationError("No '{}' in '{}' part".format(MemorySimulationDemand.SIMULATION_START_TIME,
+                                                            MemorySimulationDemand.SIMULATION_DESCRIPTION))
+
+    VHelper.validating_simulation_start_time(sim_desc[MemorySimulationDemand.SIMULATION_START_TIME])
+    logger.info("SimulationDemand validating_start_time, ok")
+
+
+def validating_release_times(json_data):
+    logger.info("SimulationDemand validating_release_times, start")
+
+    sim_init_cond = json_data[MemorySimulationDemand.INITIAL_CONDITION]
+
+    list_keys = sim_init_cond.keys()
+    if MemorySimulationDemand.TIME not in list_keys:
+        raise ValidationError("No '{}' in '{}' part".format(MemorySimulationDemand.TIME,
+                                                            MemorySimulationDemand.SIMULATION_DESCRIPTION))
+
+    VHelper.validating_release_times(sim_init_cond[MemorySimulationDemand.TIME])
+    logger.info("SimulationDemand validating_release_times, ok")
+
+
+def validating_end_time(json_data):
+    logger.info("SimulationDemand validating_end_time, start")
+
+    sim_desc = json_data[MemorySimulationDemand.SIMULATION_DESCRIPTION]
+
+    list_keys = sim_desc.keys()
+    if MemorySimulationDemand.SIMULATION_END_TIME not in list_keys:
+        raise ValidationError("No '{}' in '{}' part".format(MemorySimulationDemand.SIMULATION_END_TIME,
+                                                            MemorySimulationDemand.SIMULATION_DESCRIPTION))
+
+    VHelper.validating_simulation_end_time(sim_desc[MemorySimulationDemand.SIMULATION_END_TIME])
+    logger.info("SimulationDemand validating_end_time, ok")
+
+
+def validating_drifter_data(json_data):
+    logger.info("SimulationDemand validating_drifter_data, start")
+
+    sim_drift = json_data[MemorySimulationDemand.DRIFTER]
+
+    list_keys = sim_drift.keys()
+    if MemorySimulationDemand.DRIFTER_TYPE not in list_keys:
+        raise ValidationError("No '{}' in '{}' part".format(MemorySimulationDemand.DRIFTER_TYPE,
+                                                            MemorySimulationDemand.DRIFTER))
+    if MemorySimulationDemand.DRIFTER_NAME not in list_keys:
+        raise ValidationError("No '{}' in '{}' part".format(MemorySimulationDemand.DRIFTER_NAME,
+                                                            MemorySimulationDemand.DRIFTER))
+
+    VHelper.validating_drifter_name(sim_drift[MemorySimulationDemand.DRIFTER_TYPE],
+                                    sim_drift[MemorySimulationDemand.DRIFTER_NAME])
+
+    if MemorySimulationDemand.TOTAL_MASS in list_keys:
+        VHelper.validating_total_mass(sim_drift[MemorySimulationDemand.DRIFTER_TYPE],
+                                      sim_drift[MemorySimulationDemand.TOTAL_MASS])
+
+    logger.info("SimulationDemand validating_drifter_data, ok")
+
+
+def str_to_float_list(str_floats):
+    strels = str_floats.split(",")
+    list_fvals = []
+    for anel in strels:
+        try:
+            fval = float(anel)
+            list_fvals.append(fval)
+        except ValueError:
+            pass
+    return list_fvals
+
+
+def validating_initial_conditions(json_data):
+    logger.info("SimulationDemand validating_initial_conditions, start")
+
+    sim_init_cond = json_data[MemorySimulationDemand.INITIAL_CONDITION]
+    sim_drifter = json_data[MemorySimulationDemand.DRIFTER]
+
+    list_keys = sim_init_cond.keys()
+
+    if MemorySimulationDemand.GEOMETRY not in list_keys:
+        raise ValidationError("No '{}' in '{}' part".format(MemorySimulationDemand.GEOMETRY,
+                                                            MemorySimulationDemand.INITIAL_CONDITION))
+
+    VHelper.validating_geometry(sim_init_cond[MemorySimulationDemand.GEOMETRY])
+    as_lats = sim_init_cond[MemorySimulationDemand.LAT]
+    lats_float_list = []
+    if isinstance(as_lats, str):
+        split_str = as_lats.split(",")
+        for an_element in split_str:
+            try:
+                a_float = float(an_element.strip())
+                lats_float_list.append(a_float)
+            except ValueError as verr:
+                msg = "Error in value {} for lats".format(an_element)
+                logger.error(msg)
+                raise ValidationError(msg)
+
+    if isinstance(as_lats, list):
+        if isinstance(as_lats[0], str):
+            for a_str_element in as_lats:
+                split_str = a_str_element.split(",")
+                for an_element in split_str:
+                    try:
+                        a_float = float(an_element.strip())
+                        lats_float_list.append(a_float)
+                    except ValueError as verr:
+                        msg = "Error in value {} for lats".format(an_element)
+                        logger.error(msg)
+                        raise ValidationError(msg)
+        elif isinstance(as_lats[0], float):
+            lats_float_list.extend(as_lats)
+
+    if isinstance(as_lats, float):
+        lats_float_list.append(as_lats)
+
+    VHelper.validating_float_coord(lat_or_lon=MemorySimulationDemand.LAT, coordinate_values=lats_float_list)
+
+    as_lons = sim_init_cond[MemorySimulationDemand.LON]
+    lon_float_list = []
+    if isinstance(as_lons, str):
+        split_str = as_lons.split(",")
+        for an_element in split_str:
+            try:
+                a_float = float(an_element.strip())
+                lon_float_list.append(a_float)
+            except ValueError as verr:
+                msg = "Error in value {} for lons".format(an_element)
+                logger.error(msg)
+                raise ValidationError(msg)
+
+    if isinstance(as_lons, list):
+        if isinstance(as_lons[0], str):
+            for a_str_element in as_lons:
+                split_str = a_str_element.split(",")
+                for an_element in split_str:
+                    try:
+                        a_float = float(an_element.strip())
+                        lon_float_list.append(a_float)
+                    except ValueError as verr:
+                        msg = "Error in value {} for lons".format(an_element)
+                        logger.error(msg)
+                        raise ValidationError(msg)
+        elif isinstance(as_lons[0], float):
+            lon_float_list.extend(as_lons)
+
+    if isinstance(as_lons, float):
+        lon_float_list.append(as_lons)
+
+    VHelper.validating_float_coord(lat_or_lon=MemorySimulationDemand.LON, coordinate_values=lon_float_list)
+    VHelper.validating_coordinates_consistency(geometry_type=sim_init_cond[MemorySimulationDemand.GEOMETRY],
+                                               lats_list=lats_float_list, lons_list=lon_float_list)
+
+    if MemorySimulationDemand.RADIUS in list_keys:
+        VHelper.validating_radius(sim_init_cond[MemorySimulationDemand.RADIUS])
+
+    if MemorySimulationDemand.NUMBER not in list_keys:
+        raise ValidationError("No '{}' in '{}' part".format(MemorySimulationDemand.NUMBER,
+                                                            MemorySimulationDemand.INITIAL_CONDITION))
+    VHelper.validating_number(drifter_type=sim_drifter[MemorySimulationDemand.DRIFTER_TYPE],
+                              data=sim_init_cond[MemorySimulationDemand.NUMBER])
+
+    # Here I just check if the txt content of release times can be converted into a list of timestamps
+    # Coherence is checked elsewhere
+    validating_release_times(json_data)
+    logger.info("SimulationDemand validating_initial_conditions, end")
+
+
+def validating_timestamp_coherence(json_data):
+    logger.info("SimulationDemand validating_timestamp_coherence start")
+    sim_desc = json_data[MemorySimulationDemand.SIMULATION_DESCRIPTION]
+    txt_start_time = dt.datetime.strptime(sim_desc[MemorySimulationDemand.SIMULATION_START_TIME],
+                                          MemorySimulationDemand.TIMESTAMPFORMAT)
+
+    simulation_type = sim_desc[MemorySimulationDemand.SIMULATION_TYPE]
+
+    utc_start_time = pytz.utc.localize(txt_start_time)
+
+    txt_end_time = dt.datetime.strptime(sim_desc[MemorySimulationDemand.SIMULATION_END_TIME],
+                                        MemorySimulationDemand.TIMESTAMPFORMAT)
+    utc_end_time = pytz.utc.localize(txt_end_time)
+
+    sim_init_cond = json_data[MemorySimulationDemand.INITIAL_CONDITION]
+    val_release_times = sim_init_cond[MemorySimulationDemand.TIME]
+
+    # logger.debug("SimulationDemand validating_timestamp_coherence release_times : {}".format(txt_release_times))
+    release_times = VHelper.txt_list_to_time_list(val_release_times)
+    # logger.debug("SimulationDemand validating_timestamp_coherence release_times : {}".format(release_times))
+
+    VHelper.validating_release_times_coherence(release_times, utc_start_time, utc_end_time, simulation_type)
+
+    logger.info("SimulationDemand validating_timestamp_coherence ok")
+
+
+def validating_main_keys(json_data):
+    VHelper.validating_main_keys(json_data)
+
+
+def validating_booleans(json_data):
+    logger.info("SimulationDemand validating_booleans, start")
+
+    model_setup = json_data[MemorySimulationDemand.MODEL_SETUP]
+
+    model_setup_keys = model_setup.keys()
+
+    mandatorybooleans = [MemorySimulationDemand.CURRENT, MemorySimulationDemand.WAVES, MemorySimulationDemand.WIND,
+                         MemorySimulationDemand.BEACHING]
+
+    for aboolkey in mandatorybooleans:
+        if aboolkey not in model_setup_keys:
+            raise ValidationError("No '{}' value in '{}'".format(aboolkey, MemorySimulationDemand.MODEL_SETUP))
+        if model_setup[aboolkey] not in [True, False]:
+            raise ValidationError("Illegal value {} in '{}' in '{}', only true, false".format(
+                  model_setup[aboolkey], aboolkey, MemorySimulationDemand.MODEL_SETUP))
+
+    optionalbooleans = [MemorySimulationDemand.HORIZONTAL_SPREADING,
+                        MemorySimulationDemand.NATURAL_VERTICAL_DISPERTION,
+                        MemorySimulationDemand.BUOYANCY,
+                        MemorySimulationDemand.EVAPORATION,
+                        MemorySimulationDemand.DISSOLUTION,
+                        MemorySimulationDemand.SEDIMENTATION]
+
+    for aboolkey in optionalbooleans:
+        if model_setup[aboolkey]:
+            if model_setup[aboolkey] not in [True, False]:
+                model_setup[aboolkey] = False
+            # raise ValidationError("Illegal value {} in '{}' in '{}', only true, false".format(
+            #      model_setup[aboolkey], aboolkey, MemorySimulationDemand.MODEL_SETUP))
+
+    if MemorySimulationDemand.TWODTHREED not in model_setup:
+        raise ValidationError("No '{}' value in '{}'".format(MemorySimulationDemand.TWODTHREED,
+                                                             MemorySimulationDemand.MODEL_SETUP))
+
+    if model_setup[MemorySimulationDemand.TWODTHREED] not in [OtherConst.TWOD, OtherConst.THREED]:
+        model_setup[MemorySimulationDemand.TWODTHREED] = OtherConst.TWOD
+
+    logger.info("SimulationDemand validating_booleans, ok")
 
 
 class NodeConnection:
@@ -66,7 +329,7 @@ class NodeConnection:
 # Create your models here.
 class Node(models.Model):
     """
-    A Node is a instance of a running Django noos-drift application
+    A Node is an instance of a running Django noos-drift application
     Central is a special Node that recieves and propagates user simulation demands and recieves the results
     sent back by the Nodes
     """
@@ -96,26 +359,23 @@ class Node(models.Model):
         # function .loads does the loading and the grammatical testing
         logger.info("Node.add_local_requests, start of")
         jsonlist = glob.glob(filesfilter)
-        afile = ''
-        arequest = ''
-        # TODO: Change for better use of try except
+        afile = None
         for fname in jsonlist:
+            arequest = {}
             try:
                 afile = open(fname, "r")
+                arequest = json.load(afile)
             except FileNotFoundError as fnferr:
                 logger.error("Node.add_local_requests, could not find file : {}, {}".format(fname, fnferr))
-                pass
-
-            try:
-                arequest = json.load(afile)
+                arequest = {}
             except json.decoder.JSONDecodeError as decoderr:
                 logger.error("Node.add_local_requests, {}".format(decoderr))
-                afile.close()
-                pass
-
-            afile.close()
-            atxtrequest = json.dumps(arequest, separators=(',', ':'))
-            self.add_simulation_demand(atxtrequest, auser)
+            finally:
+                if afile is not None:
+                    afile.close()
+            if len(arequest.keys()) > 0:
+                atxtrequest = json.dumps(arequest, separators=(',', ':'))
+                self.add_simulation_demand(atxtrequest, auser)
 
         logger.info("Node.add_local_requests, end of")
         return None
@@ -145,7 +405,9 @@ class Node(models.Model):
         action = ['simulationdemands', 'create']
         try:
             logger.info("{}, json params : {}".format(object_and_method_name, a_txt_simulation_demand))
-            message_parameters = json.loads(a_txt_simulation_demand)
+            message_parameters = a_txt_simulation_demand
+            logger.info("{}, message_parameters['json_txt']: {}".format(object_and_method_name,
+                                                                        message_parameters['json_txt']))
             logger.info("{}, before action".format(object_and_method_name))
             the_client = self.node_connection.get_client()
             the_schema = self.node_connection.get_schema()
@@ -160,7 +422,8 @@ class Node(models.Model):
             raise decoderr
 
         logger.info("{}, end of".format(object_and_method_name))
-        return result
+
+        return None
 
     def add_logging_message(self, message_parameters, the_user):
         """
@@ -183,6 +446,7 @@ class Node(models.Model):
         action = ['loggingmessages', 'create']
         try:
             logger.info("Node.add_logging_message, before action")
+            logger.info("Node.add_logging_message, {}".format(message_parameters))
             the_client = self.node_connection.get_client()
             the_schema = self.node_connection.get_schema()
             logger.info(the_schema)
@@ -229,10 +493,10 @@ class Node(models.Model):
             logger.info("Node.add_uploadedfile, after action")
             logger.info("Node.add_uploadedfile, result {}".format(result))
         except coreapi.exceptions.ErrorMessage as exc:
-            logger.error("Node.add_uploadedfile, {}".format(exc.error))
+            logger.error("Node.add_uploadedfile, ErrorMessage {}".format(exc.error))
             raise exc
         except json.decoder.JSONDecodeError as decoderr:
-            logger.error("Node.add_uploadedfile, {}".format(decoderr))
+            logger.error("Node.add_uploadedfile, JSONDecodeError {}".format(decoderr))
             raise decoderr
 
         logger.info("Node.add_uploadedfile, end of")
@@ -332,6 +596,7 @@ class Node(models.Model):
 
     def connect_client(self):
         logger.info("Node.connect_client, start of")
+        logger.info("Node.connect_client, trying to reach : {}".format(self.hostname))
         assert self.node_connection is not None, "NodeConnection.connect_client, node_connection is None"
 
         try:
@@ -374,6 +639,11 @@ class Node(models.Model):
         return None
 
 
+class NotArchivedManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(archived=False)
+
+
 class SimulationDemand(models.Model):
     """
     A Simulation demand is created by a user and propagated to all Nodes
@@ -383,11 +653,22 @@ class SimulationDemand(models.Model):
     """
     user = models.ForeignKey('auth.User', related_name='simulations', on_delete=models.SET_NULL, blank=True, null=True)
     created_time = models.DateTimeField(auto_now_add=True)
-    # json_txt = models.TextField(default='{}')
-    json_txt = jsonfield.JSONField()
+    json_txt = jsonfield.JSONField(validators=[validating_main_keys, validating_simulation_type,
+                                               validating_start_time, validating_end_time, validating_drifter_data,
+                                               validating_initial_conditions, validating_timestamp_coherence,
+                                               validating_booleans])
+
+    status = models.TextField(default=StatusConst.SUBMITTED, null=False)
+    protected = models.BooleanField(default=False, null=False)
+    archived = models.BooleanField(default=False, null=False)
+    objects = models.Manager()
+    active_objects = NotArchivedManager()
 
     def __str__(self):
-        return u'%d: %s, %s' % (self.pk, self.created_time, self.json_txt)
+        if self.pk is None:
+            return u'null: %s, %s' % (self.created_time, self.json_txt)
+        else:
+            return u'%d: %s, %s' % (self.pk, self.created_time, self.json_txt)
 
 
 class Forcing(models.Model):
@@ -402,12 +683,17 @@ class Forcing(models.Model):
     display_name = models.TextField(default='', null=False)
     description = models.TextField(default='', null=False)
     use_type = models.TextField(default="O")
+    is_active = models.BooleanField(default=True, null=False, blank=False)
 
-    # TODO : check if need parameter name for json and slugname to build the archive file
-    #  example mws1.5 (wished parameter name in json file) <=> mws1dot5 (slugname now present in field code)
+    def is_oceanical(self):
+        return self.use_type == "O"
+
+    def is_meteorological(self):
+        return self.use_type == "M"
 
     def __str__(self):
-        return u'%d: %s, %s, %s, %s' % (self.pk, self.code, self.display_name, self.description, self.use_type)
+        return u'%d: %s, %s, %s, %s, %s' % (self.pk, self.code, self.display_name, self.description, self.use_type,
+                                            self.is_active)
 
 
 class NoosModel(models.Model):
@@ -418,6 +704,7 @@ class NoosModel(models.Model):
     code = models.TextField(default='', null=False)
     display_name = models.TextField(default='', null=False)
     description = models.TextField(default='', null=False)
+    is_active = models.BooleanField(default=True, null=False, blank=False)
 
 
 class LoggingMessage(models.Model):
@@ -455,7 +742,7 @@ class ForcingCouple(models.Model):
                                   null=True)
     meteorological = models.ForeignKey('Forcing', related_name='couple_b', on_delete=models.CASCADE, blank=True,
                                        null=True)
-    is_active = models.BooleanField(default=False, null=False)
+    is_active = models.BooleanField(default=False, null=False, blank=False)
 
     def couple_code(self):
         concat_code = self.oceanical.code + '_' + self.meteorological.code
@@ -463,6 +750,46 @@ class ForcingCouple(models.Model):
 
     def __str__(self):
         return u'%d: %s, %s, %s' % (self.pk, self.noos_model, self.oceanical, self.meteorological)
+
+
+class SimulationElement(models.Model):
+    """
+    Track result files uploaded to Central
+    """
+    simulation = models.ForeignKey('SimulationDemand', related_name='simulation_elements', on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(blank=False, null=False)
+    idx = models.IntegerField(blank=False, null=False)
+    json_data = jsonfield.JSONField()
+
+    def __str__(self):
+        return u'%d: %s, %d, %s, %s' % (self.pk, self.simulation, self.idx, self.timestamp, self.json_data)
+
+
+class SimulationMetadata(models.Model):
+    """
+    Track result files uploaded to Central
+    """
+    simulation = models.ForeignKey('SimulationDemand', related_name='simulation_metadata', on_delete=models.CASCADE)
+    metadata = jsonfield.JSONField()
+
+    def __str__(self):
+        return u'%d: %s, %s' % (self.pk, self.simulation, self.metadata)
+
+
+class SimulationCloud(models.Model):
+    """
+    Track result files uploaded to Central
+    """
+    simulation = models.ForeignKey('SimulationDemand', related_name='simulation_clouds', on_delete=models.CASCADE)
+    node = models.ForeignKey('Node', related_name='simulation_clouds', on_delete=models.CASCADE)
+    noos_model = models.ForeignKey('NoosModel', related_name='simulation_clouds', on_delete=models.CASCADE)
+    forcing_couple = models.ForeignKey('ForcingCouple', related_name='simulation_clouds', on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(blank=False, null=False)
+    idx = models.IntegerField(blank=False, null=False)
+    cloud_data = jsonfield.JSONField()
+
+    def __str__(self):
+        return u'%d: %s, %d, %s, %s' % (self.pk, self.simulation, self.idx, self.timestamp, self.cloud_data)
 
 
 class UploadedFile(models.Model):
@@ -487,3 +814,8 @@ class UploadedFile(models.Model):
         return u'%d: %s, %s, %s, %s, %s, %s, %s, %s' % (self.pk, self.node, self.simulation, self.noos_model,
                                                         self.forcing_couple, self.filename, self.json_txt,
                                                         self.created, self.modified)
+
+    def nc_filename(self):
+        if self.filename.endswith('.tgz'):
+            return self.filename.replace('.tgz', '.nc')
+        return ""

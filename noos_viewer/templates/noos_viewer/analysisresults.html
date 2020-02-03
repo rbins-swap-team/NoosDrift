@@ -1,0 +1,150 @@
+{% extends 'noos_viewer/base.html' %}
+{% load static %}
+
+{% block title %}Analysis results{% endblock title %}
+
+{% block page_css_block %}
+    <link rel="stylesheet" type="text/css" href="{% static '/noos_viewer/vendor/leaflet/leaflet.css' %}"
+          xmlns="http://www.w3.org/1999/html">
+    <link rel="stylesheet" type="text/css"
+          href="{% static '/noos_viewer/vendor/leaflet-measure/leaflet-measure.css' %}">
+    <link rel="stylesheet" type="text/css"
+          href="{% static '/noos_viewer/vendor/leaflet-coordinates/Leaflet.Coordinates-0.1.5.css' %}">
+{% endblock page_css_block %}
+
+{% block body_block %}
+    <div class="container top-content" style="max-width: 100%">
+        <div class="row">
+            <div class="col-7">
+                <h1 id="simulationtitle"></h1>
+            </div>
+            <div class="col-5 text-right">
+                <h1>
+                    <a class="btn btn-outline-primary" href="{% url 'noos_viewer:simulationdemands' %}" role="button"
+                       data-toggle="tooltip" data-placement="bottom" title="Return to simulation list">
+                        <i class="material-icons-round" style="vertical-align: middle;font-size: 1rem;">keyboard_backspace</i>
+                    </a>
+                    &nbsp;&nbsp;
+                    {% if zipurl %}
+                    <a href="{{ zipurl }}" class="btn btn-outline-info"
+                       role="button"
+                       data-toggle="tooltip"
+                       data-placement="bottom"
+                       title="Download">
+                            <i class="material-icons" style="vertical-align: middle;font-size: 1rem;">get_app</i>
+                    </a>
+                    {% endif %}
+                    <a href="#" class="btn btn-outline-warning" role="button" data-toggle="tooltip"
+                       data-placement="bottom"
+                       title="Prevent deletion">
+                        <i class="material-icons" style="vertical-align: middle;font-size: 1rem;">lock_open</i>
+                    </a>
+                    <a href="{% url 'noos_viewer:newfrommodel_simulationdemand' startData.demandid %}"
+                       class="btn btn-outline-primary" role="button" data-toggle="tooltip" data-placement="bottom"
+                       title="Create a new simulation based on this one">
+                        <i class="material-icons" style="vertical-align: middle;font-size: 1rem;">file_copy</i>
+                    </a>
+                    <a href="{% url 'noos_viewer:edit_simulationdemand' startData.demandid %}"
+                       class="btn btn-outline-dark" role="button" data-toggle="tooltip" data-placement="bottom"
+                       title="Edit simulation details">
+                        <i class="material-icons" style="vertical-align: middle;font-size: 1rem;">edit</i>
+                    </a>
+                    &nbsp;&nbsp;
+                    <span data-toggle="tooltip" title="Tune map">
+                        <button id="tune_map_button" data-toggle="collapse" data-target="#controlMap"
+                                class="btn btn-outline-success leaflet-control-layers-toggle"
+                                style="display: inline; width: 42px;height: 38px">
+
+                            <i class="material-icons" style="vertical-align: middle;font-size: 1rem;margin: 0">tune</i>
+                        </button>
+                    </span>
+                </h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <span id="stepindic">7 December 2016 12:00 +0000 UTC</span><br>
+                <div class="progress" style="height: 5px;">
+                    <div id="timeProgress" class="progress-bar" style="width:0"></div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div id="mapid" style="height:500px; z-index:1;"></div>
+                <div id="controlMap" class="overflow-auto pull-left collapse map_overlay_layers"
+                     style="z-index: 25; padding: 16px; width: 25%;">
+                    <div id="controlDiv" style="display: none"></div>
+
+                    <div id="layercontrol">
+                        <table id="layercontroltable" class="table table-condensed table-bordered table-hover">
+                            <thead>
+                            <tr>
+                                <th class="">
+                                    <div><span>Ellipse</span></div>
+                                </th>
+                                <th class="">
+                                    <div><span>Trajectory</span></div>
+                                </th>
+                                <th class="">
+                                    <div><span>Cloud</span></div>
+                                </th>
+                                <th class="">
+                                    <div><span>Node</span></div>
+                                </th>
+                            <tr>
+                            </thead>
+                            <tbody>
+                            <tr class="table-warning table-row-all">
+                                <td>
+                                    <input title="all_Ellipses" type="checkbox" class="leaflet-control-layers-selector"
+                                           id="all_Ellipses">
+                                </td>
+                                <td>
+                                    <input title="all_Trajectories" type="checkbox"
+                                           class="leaflet-control-layers-selector" id="all_Trajectories">
+                                </td>
+                                <td>
+                                    <button id="clear_Clouds" class="btn btn-warning" style="font-size: 0.8rem;">
+                                        Remove
+                                    </button>
+                                </td>
+                                <td>ALL</td>
+                            </tr>
+                            </tbody>
+
+                        </table>
+                        <hr>
+                        <label>
+                            <input type="checkbox" class="leaflet-control-layers-selector" id="SeaMarks"> Sea Marks
+                        </label><br>
+                        <label>
+                            Met-Ocean Map
+                            <select class="leaflet-control-layers-selector" name="MetOceanMap" id="MetOceanSelect">
+                                <option value="">--None--</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock body_block %}
+
+{% block page_js_block %}
+    <script type="application/javascript" src="{% static '/noos_viewer/vendor/leaflet/leaflet.js' %}"></script>
+    <script type="application/javascript"
+            src="{% static '/noos_viewer/vendor/leaflet-measure/leaflet-measure.en.js' %}"></script>
+    <script type="application/javascript"
+            src="{% static '/noos_viewer/vendor/leaflet-coordinates/Leaflet.Coordinates-0.1.5.min.js' %}"></script>
+    <script type="application/javascript"
+            src="{% static '/noos_viewer/vendor/leaflet-draw/leaflet.draw.js' %}"></script>
+    <script type="application/javascript"
+            src="{% static '/noos_viewer/vendor/leaflet-ellipse/l.ellipse.js' %}"></script>
+    <script type="application/javascript"
+            src="{% static '/noos_viewer/vendor/leaflet-polylinedecorator/leaflet.polylineDecorator.js' %}"></script>
+    <script type="application/javascript"
+            src="{% static '/noos_viewer/vendor/moment/moment-with-locales.min.js' %}"></script>
+    <script type="application/javascript" src="{% static '/noos_viewer/js/noosdrift-data.js' %}"></script>
+    <script type="application/javascript" src="{% static '/noos_viewer/js/noosdrift.js' %}"></script>
+{% endblock page_js_block %}

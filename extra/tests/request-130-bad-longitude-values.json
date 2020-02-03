@@ -1,0 +1,41 @@
+{
+    "simulation_description": {
+        "title": "MK Test 121",
+        "summary": "One more Summary 121",
+        "tags": [
+            "my",
+            "list",
+            "of",
+            "tags"
+        ],
+        "simulation_type": "forward",
+        "simulation_start_time": "2019-12-13T01:00:00Z",
+        "simulation_end_time": "2019-12-13T18:00:00Z"
+    },
+    "drifter": {
+        "drifter_type": "oil",
+        "drifter_name": "gasoline",
+        "total_mass": 10000
+    },
+    "initial_condition": {
+        "geometry": "point",
+        "lon": 215.9,
+        "lat": 52.1,
+        "radius": 1000,
+        "number": 2500,
+        "time": "2019-12-13T01:00:00Z"
+    },
+    "model_set_up": {
+        "2D/3D": "3D",
+        "current": true,
+        "waves": true,
+        "wind": true,
+        "beaching": true,
+        "horizontal_spreading": true,
+        "natural_vertical_dispersion": true,
+        "buoyancy": true,
+        "evaporation": true,
+        "dissolution": false,
+        "sedimentation": false
+    }
+}

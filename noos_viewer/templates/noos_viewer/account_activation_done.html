@@ -1,0 +1,6 @@
+{% autoescape off %}
+
+Your account : {{ user.username }}, has been activated.
+
+Please use <a href="https://{{ domain }}/{% url 'home' %}">Login</a> to log in
+{% endautoescape %}

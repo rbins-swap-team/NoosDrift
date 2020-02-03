@@ -1,13 +1,17 @@
-from django.contrib.auth.models import User, Group
-from noos_services.models import Node, SimulationDemand, LoggingMessage, Forcing, NoosModel, ForcingCouple, UploadedFile
-from rest_framework import viewsets, permissions
-from noos_services.serializers import UserSerializer, GroupSerializer, NodeSerializer, SimulationDemandSerializer, \
-                                      LoggingMessageSerializer, ForcingSerializer, NoosModelSerializer, \
-                                      ForcingCoupleSerializer, UploadedFileSerializer
 import logging
 
-# Create your views here.
+from django.contrib.auth.models import User, Group
 from django.http import HttpResponse
+
+from noos_services.models import Forcing, ForcingCouple, LoggingMessage, Node, NoosModel, SimulationCloud, \
+    SimulationElement, SimulationDemand, SimulationMetadata, UploadedFile
+from noos_services.serializers import ForcingCoupleSerializer, ForcingSerializer, GroupSerializer, \
+    LoggingMessageSerializer, NodeSerializer, NoosModelSerializer, SimulationCloudSerializer, \
+    SimulationDemandSerializer, SimulationElementSerializer, SimulationMetadataSerializer, UploadedFileSerializer, \
+    UserSerializer
+
+from rest_framework import viewsets, permissions
+# Create your views here.
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +34,7 @@ class UserViewSet(viewsets.ModelViewSet):
     Receives a GET request with an ID number.
     Returns one users object.
     """
+    schema = None
     permission_classes = (permissions.DjangoModelPermissions,)
     queryset = User.objects.all().order_by('-date_joined')
     serializer_class = UserSerializer
@@ -49,6 +54,7 @@ class GroupViewSet(viewsets.ModelViewSet):
     Receives a GET request with an ID number.
     Returns one group object.
     """
+    schema = None
     permission_classes = (permissions.DjangoModelPermissions,)
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
@@ -68,6 +74,7 @@ class NodeViewSet(viewsets.ModelViewSet):
     Receives a GET request with an ID number.
     Returns one nodes object.
     """
+    schema = None
     permission_classes = (permissions.DjangoModelPermissions,)
     queryset = Node.objects.all()
     serializer_class = NodeSerializer
@@ -87,7 +94,7 @@ class SimulationDemandViewSet(viewsets.ModelViewSet):
 
     create:
     API endpoint that allows simulationdemands to be added.
-    Receives a POST request with one data fields ( 'json_txt' the related simulation's escaped json ).
+    Receives a POST request with one data fields ( 'json_txt' the related simulation's json ).
 
     read:
     API endpoint that allows simulationdemands to be viewed.
@@ -95,8 +102,87 @@ class SimulationDemandViewSet(viewsets.ModelViewSet):
     Returns one simulationdemands object.
     """
     permission_classes = (permissions.DjangoModelPermissions,)
-    queryset = SimulationDemand.objects.all()
+    queryset = SimulationDemand.objects.filter(archived=False)
     serializer_class = SimulationDemandSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class SimulationElementViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows simulationelements to be viewed or edited.
+
+    list:
+    API endpoint that allows simulationelements to be viewed.
+    Receives a GET request.
+    Returns the complete simulationelements list.
+
+    create:
+    API endpoint that allows simulationelements to be added.
+    Receives a POST request with one data fields ( 'json_txt' the related simulation's json ).
+
+    read:
+    API endpoint that allows simulationelements to be viewed.
+    Receives a GET request with an ID number.
+    Returns one simulationelement object.
+    """
+    schema = None
+    permission_classes = (permissions.DjangoModelPermissions,)
+    queryset = SimulationElement.objects.all()
+    serializer_class = SimulationElementSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class SimulationCloudViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows simulationcloud to be viewed or edited.
+
+    list:
+    API endpoint that allows simulationcloud to be viewed.
+    Receives a GET request.
+    Returns the complete simulationcloud list.
+
+    create:
+    API endpoint that allows simulationcloud to be added.
+
+    read:
+    API endpoint that allows simulationcloud to be viewed.
+    Receives a GET request with an ID number.
+    Returns one simulationcloud object.
+    """
+    schema = None
+    permission_classes = (permissions.DjangoModelPermissions,)
+    queryset = SimulationCloud.objects.all()
+    serializer_class = SimulationCloudSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class SimulationMetadataViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows simulationmetadata to be viewed or edited.
+
+    list:
+    API endpoint that allows simulationmetadata to be viewed.
+    Receives a GET request.
+    Returns the complete simulationmetadata list.
+
+    create:
+    API endpoint that allows simulationmetadata to be added.
+
+    read:
+    API endpoint that allows simulationmetadata to be viewed.
+    Receives a GET request with an ID number.
+    Returns one simulationmetadata object.
+    """
+    schema = None
+    permission_classes = (permissions.DjangoModelPermissions,)
+    queryset = SimulationMetadata.objects.all()
+    serializer_class = SimulationMetadataSerializer
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -113,7 +199,8 @@ class LoggingMessageViewSet(viewsets.ModelViewSet):
 
     create:
     API endpoint that allows loggingmessages to be added.
-    Receives a POST request with six data fields ( 'status', 'message', 'node' the node 's ID, 'forcing_couple' the forcings's ID used, 'noos_model' the models's ID used, 'simulation_demand' the related simulation's ID ).
+    Receives a POST request with six data fields ( 'status', 'message', 'node' the node 's ID, 'forcing_couple' the
+    forcings's ID used, 'noos_model' the models's ID used, 'simulation_demand' the related simulation's ID ).
 
     read:
     API endpoint that allows loggingmessages to be viewed.
@@ -142,6 +229,7 @@ class ForcingViewSet(viewsets.ModelViewSet):
     Receives a GET request with an ID number.
     Returns one forcing object.
     """
+    schema = None
     permission_classes = (permissions.DjangoModelPermissions,)
     queryset = Forcing.objects.all()
     serializer_class = ForcingSerializer
@@ -154,6 +242,7 @@ class ForcingCoupleViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows ForcingCouples to be viewed or edited.
     """
+    schema = None
     permission_classes = (permissions.DjangoModelPermissions,)
     queryset = ForcingCouple.objects.all()
     serializer_class = ForcingCoupleSerializer
@@ -176,6 +265,7 @@ class NoosModelViewSet(viewsets.ModelViewSet):
     Receives a GET request with an ID number.
     Returns one noosmodels object.
     """
+    schema = None
     permission_classes = (permissions.DjangoModelPermissions,)
     queryset = NoosModel.objects.all()
     serializer_class = NoosModelSerializer
@@ -195,7 +285,9 @@ class UploadedFileViewSet(viewsets.ModelViewSet):
 
     create:
     API endpoint that allows uploadedfiles to be added.
-    Receives a POST request with six data fields ( 'filename' name of uploaded file, 'json_txt' the related simulation's escaped json, 'simulation' the related simulation's ID, 'node' the node's ID that upload the file, 'noos_model' the model's ID used, 'forcing_couple' the forcings couple ID used ).
+    Receives a POST request with six data fields ( 'filename' name of uploaded file, 'json_txt' the related
+    simulation's json, 'simulation' the related simulation's ID, 'node' the node's ID that upload the file,
+    'noos_model' the model's ID used, 'forcing_couple' the forcings couple ID used ).
 
     read:
     API endpoint that allows uploadedfiles to be viewed.
