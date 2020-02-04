@@ -35,16 +35,13 @@ NOOS_MME_MODEL = "NOOS_MME_MODEL"
 NOOS_NODE_ID = "NOOS_NODE_ID"
 NOOS_PROD = "PROD"
 NOOS_ROLE = "NOOS_ROLE"
-NOOS_MME_CMD = ['python', './mme_code/noos-mme.py', '-i']
-NOOS_MAPS_CMD = ['python', '/var/opt/noosdrift/Django/noosDrift/maps_code/copyMaps.py']
-NOOS_NODE_PREPROCESSING_CMD = ['ssh', 'optos_v2_test@192.168.37.106', './cronrun', 'python3',
-                               '/home/optos_v2_test/oserit/applications/noosdrift/procs/oserit_preproc.py']
+NOOS_MME_CMD = ['LinuxCommand', 'param01', 'param02']
+NOOS_MAPS_CMD = ['LinuxCommand', 'param01', 'param02']
+NOOS_NODE_PREPROCESSING_CMD = ['LinuxCommand', 'param01', 'param02']
 
 # TODO replace with command to execute model software
-NOOS_NODE_MODEL_CMD = ['ssh', 'optos_v2_test@192.168.37.106', './cronrun', 'python3',
-                       '/home/optos_v2_test/oserit/applications/noosdrift/procs/oserit_proc.py']
-NOOS_NODE_POSTPROCESSING_CMD = ['ssh', 'optos_v2_test@192.168.37.106', './cronrun', 'python3',
-                                '/home/optos_v2_test/oserit/applications/noosdrift/procs/oserit_postproc.py']
+NOOS_NODE_MODEL_CMD = ['LinuxCommand', 'param01', 'param02']
+NOOS_NODE_POSTPROCESSING_CMD = ['LinuxCommand', 'param01', 'param02']
 NOOS_USERNAME = "NOOS_USERNAME"
 NOOS_USERPWD = "NOOS_USERPWD"
 NOOS_FTPDIR = os.path.join(BASE_DIR, 'requests')
