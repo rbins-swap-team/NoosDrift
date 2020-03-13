@@ -1,5 +1,3 @@
-#!/home/mkapel/gitrepo/noosDrift/venv//bin/python
-
 # !/..../gitrepo/noosDrift/venv//bin/python
 # !/usr/bin/python3
 # The Python above may not be adequate for you but make sur you are using a python3 environment
