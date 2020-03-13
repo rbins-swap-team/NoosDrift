@@ -1,9 +1,8 @@
-#!/home/mkapel/gitrepo/noosDrift/venv/bin/python3
+#!/somePythonVirtualEnvironment/bin/python3
 
-## !/usr/bin/python3
+# !/usr/bin/python3
 # The Python above may not be adequate for you but make sur you are using a python3 environment
 # with the coreapi library available
-# #!/somePythonVirtualEnvironment/bin/python3
 
 import argparse
 import os
