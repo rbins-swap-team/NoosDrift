@@ -43,25 +43,67 @@
             </div>
             <div class="col-4 align-self-center text-center">
                 {% if user.is_authenticated %}
-                    <div class="btn-group float-right" role="group" aria-label="Botton basic">
+                    <div class="btn-group float-right" role="group" aria-label="Button basic">
                         <a class="btn btn-danger" href="{% url 'logout' %}" role="button">
                             <i class="fas fa-sign-out-alt"></i>&nbsp;Log out
                         </a>
-                        <a href="{% url 'noos_viewer:contactform' %}" class="btn btn-warning" role="button">
-                            <i class="material-icons" style="font-size: 1rem;vertical-align: middle;padding-bottom: 3px;">contact_mail</i>&nbsp;Contact
-                        </a>
-                        <a href="https://odnature.naturalsciences.be/noosdrift/" class="btn btn-info" role="button">
-                            <i class="material-icons" style="font-size: 1rem;vertical-align: middle;padding-bottom: 3px;">format_list_bulleted</i>&nbsp;Web Site
-                        </a>
+                        <button class="btn btn-info dropdown-toggle" type="button" id="dropdownMenuButton"
+                                data-toggle="dropdown"
+                                aria-haspopup="true" aria-expanded="false">
+                            Menu
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            <a href="{% url 'noos_viewer:contactform' %}" class="dropdown-item">
+                                <i class="material-icons"
+                                   style="font-size: 1rem;vertical-align: middle;padding-bottom: 3px;">tune</i>Contact
+                            </a>
+                            <a href="https://odnature.naturalsciences.be/noosdrift/" class="dropdown-item">
+                                <i class="material-icons"
+                                   style="font-size: 1rem;vertical-align: middle;padding-bottom: 3px;">tune</i>
+                                NOOSDrift WebSite</a>
+                            <a href="https://odnature.naturalsciences.be/noosdrift/user-guide/" class="dropdown-item">
+                                <i class="material-icons"
+                                   style="font-size: 1rem;vertical-align: middle;padding-bottom: 3px;">tune</i>
+                                User Guide</a>
+                            <a href="https://odnature.naturalsciences.be/noosdrift/disclaimer/" class="dropdown-item">
+                                <i class="material-icons"
+                                   style="font-size: 1rem;vertical-align: middle;padding-bottom: 3px;">tune</i>
+                                Discl.</a>
+                            <a href="https://odnature.naturalsciences.be/noosdrift/conditions-use/" class="dropdown-item">
+                                <i class="material-icons"
+                                   style="font-size: 1rem;vertical-align: middle;padding-bottom: 3px;">tune</i>
+                                Conditions of use</a>
+                        </div>
                     </div>
                 {% else %}
-                    <div class="btn-group float-right" role="group" aria-label="Bottons_forall">
-                        <a href="{% url 'noos_viewer:contactform' %}" class="btn btn-warning" role="button">
-                             <i class="material-icons" style="font-size: 1rem;vertical-align: middle;padding-bottom: 3px;">contact_mail</i>&nbsp;Contact
-                        </a>
-                        <a href="https://odnature.naturalsciences.be/noosdrift/" class="btn btn-info" role="button">
-                            <i class="material-icons" style="font-size: 1rem;vertical-align: middle;padding-bottom: 3px;">format_list_bulleted</i>&nbsp;Web Site
-                        </a>
+                    <div class="dropdown float-right">
+                        <button class="btn btn-info dropdown-toggle" type="button" id="dropdownMenuButton"
+                                data-toggle="dropdown"
+                                aria-haspopup="true" aria-expanded="false">
+                            Menu
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            <a href="{% url 'noos_viewer:contactform' %}" class="dropdown-item">
+                                <i class="material-icons"
+                                   style="font-size: 1rem;vertical-align: middle;padding-bottom: 3px;">tune</i>Contact
+                            </a>
+                            <a href="https://odnature.naturalsciences.be/noosdrift/" class="dropdown-item">
+                                <i class="material-icons"
+                                   style="font-size: 1rem;vertical-align: middle;padding-bottom: 3px;">tune</i>
+                                NOOSDrift WebSite</a>
+                            <a href="https://odnature.naturalsciences.be/noosdrift/user-guide/" class="dropdown-item">
+                                <i class="material-icons"
+                                   style="font-size: 1rem;vertical-align: middle;padding-bottom: 3px;">tune</i>
+                                User Guide</a>
+                            <a href="https://odnature.naturalsciences.be/noosdrift/disclaimer/" class="dropdown-item">
+                                <i class="material-icons"
+                                   style="font-size: 1rem;vertical-align: middle;padding-bottom: 3px;">tune</i>
+                                Discl.</a>
+                            <a href="https://odnature.naturalsciences.be/noosdrift/conditions-use/" class="dropdown-item">
+                                <i class="material-icons"
+                                   style="font-size: 1rem;vertical-align: middle;padding-bottom: 3px;">tune</i>
+                                Conditions of use</a>
+                        </div>
                     </div>
                 {% endif %}
             </div>

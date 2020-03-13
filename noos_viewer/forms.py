@@ -1,7 +1,7 @@
 from captcha.fields import CaptchaField
 from django.core.exceptions import ValidationError as CValidationError
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, password_validation
 from django.contrib.auth.models import User
 import logging
 from noos_services.ns_const import DRIFTER_NAME_ALL_CHOICES, MemorySimulationDemand, OtherConst
@@ -43,9 +43,10 @@ class ContactForm(forms.Form):
 
 
 class SignUpForm(UserCreationForm):
+    username_constraints = 'No spaces.<br>150 characters or fewer.<br>Letters, digits and @/./+/-/_ only.'
     username = forms.CharField(label='Username',
                                max_length=150,
-                               help_text='No spaces.<br>150 characters or fewer.<br>Letters, digits and @/./+/-/_ only.',
+                               help_text=username_constraints,
                                widget=forms.TextInput(attrs={'placeholder': 'Please provide a username',
                                                              'autocorrect': 'off',
                                                              'spellcheck': 'false',
@@ -81,6 +82,10 @@ class SignUpForm(UserCreationForm):
                                                               'autocorrect': 'off',
                                                               'spellcheck': 'true',
                                                               'class': 'form-control'}))
+    password1 = forms.CharField(label='Password',
+                                strip=False,
+                                widget=forms.PasswordInput(attrs={'autocomplete': 'new-password'}),
+                                help_text=password_validation.password_validators_help_text_html())
     captcha = CaptchaField()
 
     class Meta:
@@ -293,7 +298,7 @@ class SimulationDemandForm(forms.Form, MemorySimulationDemand):
             try:
                 a_float = float(a_str_float.strip())
                 float_list.append(a_float)
-            except ValueError as verr:
+            except ValueError:
                 logger.error("{}, Error in lat : {} is not a float".format(name_and_method, a_str_float))
 
         try:
@@ -315,7 +320,7 @@ class SimulationDemandForm(forms.Form, MemorySimulationDemand):
             try:
                 a_float = float(a_str_float.strip())
                 float_list.append(a_float)
-            except ValueError as verr:
+            except ValueError:
                 logger.error("{}, Error in lat : {} is not a float".format(name_and_method, a_str_float))
 
         try:
@@ -343,58 +348,64 @@ class SimulationDemandForm(forms.Form, MemorySimulationDemand):
 
     def clean_evaporation(self):
         name_and_method = "SimulationDemandForm.clean_evaporation"
+        logger.info("{}, start".format(name_and_method))
         data = self.cleaned_data[self.EVAPORATION]
 
         if self.cleaned_data[self.DRIFTER_TYPE] == OtherConst.OBJECT:
             return False
-
+        logger.info("{}, end".format(name_and_method))
         return data
 
     def clean_horizontal_spreading(self):
         name_and_method = "SimulationDemandForm.clean_horizontal_spreading"
+        logger.info("{}, start".format(name_and_method))
         data = self.cleaned_data[self.HORIZONTAL_SPREADING]
 
         if self.cleaned_data[self.DRIFTER_TYPE] == OtherConst.OBJECT:
             return False
-
+        logger.info("{}, end".format(name_and_method))
         return data
 
     def clean_sedimentation(self):
         data = self.cleaned_data[self.SEDIMENTATION]
         name_and_method = "SimulationDemandForm.clean_sedimentation"
+        logger.info("{}, start".format(name_and_method))
         if self.cleaned_data[self.DRIFTER_TYPE] == OtherConst.OBJECT:
             return False
-
+        logger.info("{}, end".format(name_and_method))
         return data
 
     def clean_dissolution(self):
         data = self.cleaned_data[self.DISSOLUTION]
         name_and_method = "SimulationDemandForm.clean_dissolution"
+        logger.info("{}, start".format(name_and_method))
         if self.cleaned_data[self.DRIFTER_TYPE] == OtherConst.OBJECT:
             return False
-
+        logger.info("{}, end".format(name_and_method))
         return data
 
     def clean_number(self):
         data = self.cleaned_data[self.NUMBER]
         name_and_method = "SimulationDemandForm.clean_number"
+        logger.info("{}, start".format(name_and_method))
         drifter_type = self.cleaned_data[self.DRIFTER_TYPE]
 
         try:
             VHelper.validating_number(drifter_type=drifter_type, data=data)
         except CValidationError as cv_err:
             raise forms.ValidationError(cv_err.message)
-
+        logger.info("{}, end".format(name_and_method))
         return data
 
     def clean_radius(self):
         data = self.cleaned_data[self.RADIUS]
         name_and_method = "SimulationDemandForm.clean_radius"
+        logger.info("{}, start".format(name_and_method))
         try:
             VHelper.validating_radius(data=data)
         except CValidationError as cv_err:
             raise forms.ValidationError(cv_err.message)
-
+        logger.info("{}, end".format(name_and_method))
         return data
 
     def clean_release_times(self):
@@ -500,4 +511,43 @@ class SimulationDemandForm(forms.Form, MemorySimulationDemand):
 
         logger.info("{}, end".format(name_and_method))
 
+        return cleaned_data
+
+
+class SimulationDemandEditedForm(forms.Form, MemorySimulationDemand):
+    id = forms.IntegerField(label='Id',
+                            required=False,
+                            widget=forms.NumberInput(attrs={'disabled': 'true',
+                                                            'class': 'form-control'}))
+    # Simulation description
+    title = forms.CharField(label='Title',
+                            max_length=100,
+                            widget=forms.TextInput(attrs={
+                                'placeholder': 'Please provide a title to identify your simulation',
+                                'class': 'form-control'}))
+
+    summary = forms.CharField(label='Summary',
+                              widget=forms.Textarea(attrs={
+                                  'placeholder': 'Please provide a summary to identify your simulation',
+                                  "rows": 3,
+                                  'class': 'form-control'}))
+
+    tags = forms.CharField(label="Tags",
+                           max_length=200,
+                           widget=forms.TextInput(attrs={'data-role': 'tagsinput',
+                                                         'class': 'form-control'}))
+
+    protected = forms.BooleanField(label='Protected',
+                                   initial=False,
+                                   required=False,
+                                   widget=forms.CheckboxInput(attrs={'class': 'form-check-input',
+                                                                     'style': 'margin: 0;'
+                                                                              'margin-top: 0px;'
+                                                                              'margin-top: 0.75rem;'}))
+
+    def clean(self):
+        cleaned_data = super().clean()
+        name_and_method = "SimulationDemandEditedForm.clean"
+        logger.info("{}, start".format(name_and_method))
+        logger.info("{}, end".format(name_and_method))
         return cleaned_data

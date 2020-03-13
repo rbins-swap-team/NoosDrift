@@ -5,16 +5,21 @@
 {% block body_block %}
     <div class="container top-content">
         <div class="row">
-            <div class="col-12">
-                <h2>Simulations list, number of records : {{ num_rec }}
+            <div class="col-8">
+                <h2>Simulations list, number of records : {{ num_rec }}</h2>
+            </div>
+            <div class="col-4">
                     <span style="display: inline" class="float-right">
+                        <a class="btn btn-primary" href="{% url 'home' %}"
+                                   role="button">
+                           <i class="fas fa-list-ol"></i>&nbsp;Application Home
+                        </a>
                     <a href="{% url 'noos_viewer:new_simulationdemand' %}" class="btn btn-outline-success"
                        role="button" data-toggle="tooltip" data-placement="bottom"
                        title="New simulation">
                         <i class="material-icons" style="vertical-align: middle;">add_circle_outline</i>
                     </a>
                 </span>
-                </h2>
             </div>
         </div>
         <div class="row">
@@ -52,12 +57,21 @@
                            title="View Demand">
                             <i class="material-icons" style="vertical-align: middle;font-size: 1rem;">assignment_turned_in</i>
                         </a>
+                           {% if asimulation.protected %}
                         <a href="{% url 'noos_viewer:protect_simulationdemand' asimulation.id %}"
                            class="btn btn-outline-warning" role="button" data-toggle="tooltip"
                            data-placement="bottom"
-                           title="Prevent deletion">
-                            <i class="material-icons" style="vertical-align: middle;font-size: 1rem;">lock_open</i>
+                           title="Click to allow deletion">
+                              <i class="material-icons" style="vertical-align: middle;font-size: 1rem;">lock_closed</i>
                         </a>
+                           {% else %}
+                        <a href="{% url 'noos_viewer:protect_simulationdemand' asimulation.id %}"
+                           class="btn btn-outline-warning" role="button" data-toggle="tooltip"
+                           data-placement="bottom"
+                           title="Click to prevent deletion">
+                              <i class="material-icons" style="vertical-align: middle;font-size: 1rem;">lock_open</i>
+                        </a>
+                           {% endif %}
                         <a href="{% url 'noos_viewer:newfrommodel_simulationdemand' asimulation.id %}"
                            class="btn btn-outline-primary" role="button" data-toggle="tooltip"
                            data-placement="bottom"

@@ -10,6 +10,12 @@ class SimulationDemandHelper(MemorySimulationDemand):
 
     @staticmethod
     def simulation_init(simulationid):
+        """
+        All basic elements of a demand.
+        This method is called by the Web-Interface to start working on demand results and get the basic info.
+        :param simulationid:
+        :return:
+        """
         object_and_method = "Helper.simulation_init"
         logger.info("{}, start".format(object_and_method))
         the_simulation = SimulationDemand.active_objects.get(pk=simulationid)
@@ -28,6 +34,12 @@ class SimulationDemandHelper(MemorySimulationDemand):
 
     @staticmethod
     def simulations_for_demand(simulationid, stepidx):
+        """
+        Returns a particular step of a specific simulation
+        :param simulationid:
+        :param stepidx:
+        :return:
+        """
         object_and_method = "Helper.simulations_for_demand"
         logger.info("{}, start".format(object_and_method))
         the_simulation = SimulationDemand.active_objects.get(pk=simulationid)
@@ -57,10 +69,7 @@ class SimulationDemandHelper(MemorySimulationDemand):
             # logger.debug("{}, status is None or empty ??".format(name_and_method))
             simulation_demand_dict[self.STATUS] = 'OK?'
 
-        simulation_demand_dict[self.PROTECTED] = "true"
-        if json_dict[self.INITIAL_CONDITION].get(self.PROTECTED, False) is False:
-            simulation_demand_dict[self.PROTECTED] = "false"
-
+        simulation_demand_dict[self.PROTECTED] = simulation_demand.protected
         simulation_demand_dict[self.TITLE] = json_dict[self.SIMULATION_DESCRIPTION][self.TITLE]
         simulation_demand_dict[self.SUMMARY] = json_dict[self.SIMULATION_DESCRIPTION][self.SUMMARY]
         if self.TAGS in json_dict[self.SIMULATION_DESCRIPTION]:
@@ -76,7 +85,10 @@ class SimulationDemandHelper(MemorySimulationDemand):
 
         simulation_demand_dict[self.DRIFTER_TYPE] = json_dict[self.DRIFTER][self.DRIFTER_TYPE]
         simulation_demand_dict[self.DRIFTER_NAME] = json_dict[self.DRIFTER][self.DRIFTER_NAME]
-        simulation_demand_dict[self.TOTAL_MASS] = json_dict[self.DRIFTER][self.TOTAL_MASS]
+        if simulation_demand_dict[self.DRIFTER_TYPE] == OtherConst.OBJECT:
+            simulation_demand_dict[self.TOTAL_MASS] = 5000
+        else:
+            simulation_demand_dict[self.TOTAL_MASS] = json_dict[self.DRIFTER][self.TOTAL_MASS]
 
         simulation_demand_dict[self.GEOMETRY] = json_dict[self.INITIAL_CONDITION][self.GEOMETRY]
 
@@ -146,6 +158,12 @@ class SimulationDemandHelper(MemorySimulationDemand):
 
     @staticmethod
     def str_to_float_list(str_floats):
+        """
+        Convert a string containing a list of floats as text into a list of float objects.
+        The floats elements in the text are separated by ","
+        :param str_floats:
+        :return:
+        """
         strels = str_floats.split(",")
         list_fvals = []
         for anel in strels:
@@ -158,10 +176,17 @@ class SimulationDemandHelper(MemorySimulationDemand):
         return list_fvals
 
     def extract_from_form_for_new(self, simulation_demand_form):
-        logger.info("extract_from_form_for_new, start")
+        """
+        Extract a Dictionary from a SimulationDemandForm
+        This method is called by the view. The result will be used to create the SimulationDemand object
+        :param simulation_demand_form:
+        :return:
+        """
+        name_and_method = "extract_from_form_for_new"
+        logger.info("{}, start".format(name_and_method))
         form_dict = {self.PROTECTED: False}
         if self.PROTECTED in simulation_demand_form.cleaned_data:
-            form_dict[self.PROTECTED] = True
+            form_dict[self.PROTECTED] = simulation_demand_form.cleaned_data[self.PROTECTED]
 
         alltags_str = simulation_demand_form.cleaned_data[self.TAGS]
         alltags_list = []
@@ -185,7 +210,6 @@ class SimulationDemandHelper(MemorySimulationDemand):
         form_value_list = simulation_demand_form.cleaned_data[self.RELEASE_TIMES]
         timelist = []
         for listel in form_value_list:
-            # if isinstance(form_value, str):
             if isinstance(listel, str):
                 timelist.append(listel)
 
@@ -227,10 +251,16 @@ class SimulationDemandHelper(MemorySimulationDemand):
                      self.MODEL_SETUP: model_set_up_dict}
 
         form_dict[self.JSON_TXT] = json_dict
-        logger.info("extract_from_form_for_new, end")
+        logger.info("{}, end".format(name_and_method))
         return form_dict
 
     def extract_from_form_for_edit(self, simulation_demand_form):
+        """
+        Called for Web-Interface.
+        Extracts minimum values to update SimulationDemand
+        :param simulation_demand_form:
+        :return:
+        """
         object_and_name = "Helper.extract_from_form_for_edit"
         logger.info("{}, start".format(object_and_name))
         form_dict = {self.ID: simulation_demand_form.cleaned_data[self.ID]}
@@ -244,9 +274,10 @@ class SimulationDemandHelper(MemorySimulationDemand):
 
         form_dict[self.PROTECTED] = False
         if self.PROTECTED in simulation_demand_form.cleaned_data:
-            form_dict[self.PROTECTED] = True
+            form_dict[self.PROTECTED] = simulation_demand_form.cleaned_data[self.PROTECTED]
 
         form_dict[self.SIMULATION_DESCRIPTION] = simulation_description_dict
+        # logger.info("{}, {}".format(object_and_name, form_dict))
         logger.info("{}, end".format(object_and_name))
         return form_dict
 
