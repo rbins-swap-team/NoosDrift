@@ -1,0 +1,36 @@
+{
+    "simulation_description": {
+        "title": "MK-SIM-20200227-02",
+        "summary": "Summary MK-SIM-20200227-02",
+        "tags": [ "MK-Test" ],
+        "simulation_type": "forward",
+        "simulation_start_time": "2020-02-25T01:00:00Z",
+        "simulation_end_time": "2020-02-28T18:00:00Z"
+    },
+    "drifter": {
+        "drifter_type": "oil",
+        "drifter_name": "gasoline",
+        "total_mass": 10000
+    },
+    "initial_condition": {
+        "geometry": "point",
+        "lon": ["2.159"],
+        "lat": ["52.1"],
+        "radius": 1000,
+        "number": 2500,
+        "time": "2020-02-25T01:00:00Z"
+    },
+    "model_set_up": {
+        "2D/3D": "2D",
+        "beaching": true,
+        "buoyancy": false,
+        "current": true,
+        "dissolution": false,
+        "evaporation": true,
+        "horizontal_spreading": true,
+        "natural_vertical_dispersion": false,
+        "sedimentation": false,
+        "waves": true,
+        "wind": true
+    }
+}
