@@ -31,7 +31,8 @@ urlpatterns = [
          name='protect_simulationdemand'),
 
     # prepare form to edit simulation database object
-    path('simulationdemand/edit/<int:simulationid>/', noos_viewer_views.edit_simulationdemand, name='edit_simulationdemand'),
+    path('simulationdemand/edit/<int:simulationid>/', noos_viewer_views.edit_simulationdemand,
+         name='edit_simulationdemand'),
 
     # get back data of simulation object to be displayed
     # Just see the simulation

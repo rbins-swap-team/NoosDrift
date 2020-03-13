@@ -15,10 +15,11 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from noosDrift.settings import APPUSERS_GROUP, BASE_URL, MAIL_ADMIN_NOOSDRIFT, MEDIA_DIR, MEDIA_URL, \
     ODIN_MAILANSWERACCOUNT
 
+from noos_services.archivehelper import ArchiveHelper
 from noos_services.helper import Helper as ServiceSimulationDemandHelper
 from noos_services.models import LoggingMessage, SimulationDemand
 from noos_services.ns_const import MemorySimulationDemand, OtherConst, StatusConst
-from noos_viewer.forms import SignUpForm, SimulationDemandForm, ContactForm
+from noos_viewer.forms import ContactForm, SignUpForm, SimulationDemandForm, SimulationDemandEditedForm
 from noos_viewer.helper import SimulationDemandHelper
 from noos_viewer.models import UserProfile
 from noos_viewer.tokens import account_activation_token
@@ -35,12 +36,10 @@ def simulation_demands(request):
     :return:
     """
     name_and_method = "views.simulation_demands"
-    logger.info("{}, start".format(name_and_method))
-
     if request.user is None or not request.user.is_authenticated:
-        logger.error("{}, this is not a Central Node".format(name_and_method))
         return redirect('home')
 
+    logger.info("{}, start".format(name_and_method))
     simulations_list = ServiceSimulationDemandHelper.simulations_list()
     template_name = 'noos_viewer/simulationdemands.html'
     logger.info("{}, end".format(name_and_method))
@@ -55,6 +54,7 @@ def update_simulation_demand(request):
     Here we are working with a Form which does not match the model and that we have to transform first into a model
     object)
     :param request:
+    :param simulationid:
     :return:
     """
     name_and_object = "views.update_simulation_demand"
@@ -67,17 +67,17 @@ def update_simulation_demand(request):
     if request.method == 'POST':
         # logger.debug("signup, method POST")
         # logger.debug("{}, post {}".format(name_and_object, request.POST))
-        form = SimulationDemandForm(request.POST)
+        form = SimulationDemandEditedForm(request.POST)
         demand_helper = SimulationDemandHelper()
-        simulationid = None
         the_form = None
         try:
+            simulationid = -999
             if form.is_valid():
                 # logger.debug("{}, form is valid".format(name_and_object))
                 simulation_demand_dict = demand_helper.extract_from_form_for_edit(form)
+                # logger.debug("{}, demand id is : {}".format(name_and_object, simulation_demand_dict))
                 simulationid = simulation_demand_dict[SimulationDemandHelper.ID]
-                simulation_demand = SimulationDemand.active_objects.get(pk=simulation_demand_dict[
-                    SimulationDemandHelper.ID])
+                simulation_demand = SimulationDemand.active_objects.get(pk=simulationid)
                 simulation_demand.protected = simulation_demand_dict[SimulationDemandHelper.PROTECTED]
                 json_dict = simulation_demand.json_txt
                 json_dict[SimulationDemandHelper.SIMULATION_DESCRIPTION][SimulationDemandHelper.TITLE] = \
@@ -88,18 +88,16 @@ def update_simulation_demand(request):
                 json_dict[SimulationDemandHelper.SIMULATION_DESCRIPTION][SimulationDemandHelper.TAGS] = \
                     simulation_demand_dict[SimulationDemandHelper.SIMULATION_DESCRIPTION][SimulationDemandHelper.TAGS]
                 simulation_demand.save()
-                the_form = SimulationDemandForm(initial=simulation_demand)
-                template_name = 'noos_viewer/simulationdemand.html'
-                context = {'form': the_form, 'theid': simulationid}
+                return redirect('noos_viewer:view_simulationdemand', simulationid=simulationid)
             else:
-                template_name = 'noos_viewer/simulationdemand.html'
-                context = {'form': the_form, 'theid': simulationid}
                 logger.error("{}, form is not valid ????".format(name_and_object))
                 for afield in form.fields:
                     logger.error("{}, afield : {}".format(name_and_object, afield))
 
-                # logger.debug("{}, errors : {}".format(name_and_object, form.errors))
-        except ObjectDoesNotExist as one_err:
+                template_name = 'noos_viewer/edit_simulationdemand.html'
+                logger.error("{}, errors : {}".format(name_and_object, form.errors))
+                context = {'form': form}
+        except ObjectDoesNotExist:
             context = {'err_mesg': "The form object doesn't exist."}
             logger.error("The form object doesn't exist.")
         except ValidationError as verr:
@@ -113,13 +111,14 @@ def update_simulation_demand(request):
 
 def cloud_of_points_for_demand(request, simulationid, modelcouple, stepidx):
     """
+    Returns a cloud of points such as calculated for a specific demand by a specific model for a specific moment
     :param request:
     :param simulationid:
     :param modelcouple:
     :param stepidx:
     :return:
     """
-    the_cloud={}
+    the_cloud = {}
     try:
         the_cloud = SimulationDemandHelper.cloud_of_points_for_demand(simulationid, modelcouple, stepidx)
     except ObjectDoesNotExist:
@@ -129,8 +128,15 @@ def cloud_of_points_for_demand(request, simulationid, modelcouple, stepidx):
 
 
 def report_row(simulation_demand):
+    """
+    One row from the report generated by make_report_file
+    :param simulation_demand:
+    :return:
+    """
     name_and_method = "views.report_row"
     logger.info("{}, start".format(name_and_method))
+    creation_time = simulation_demand.created_time
+    stcreation_time = dt.datetime.strftime(creation_time, MemorySimulationDemand.TIMESTAMPFORMAT)
     json_data = simulation_demand.json_txt
     initial_conditions = json_data[MemorySimulationDemand.INITIAL_CONDITION]
     geom = initial_conditions[MemorySimulationDemand.GEOMETRY]
@@ -168,12 +174,15 @@ def report_row(simulation_demand):
         end_time = dt.datetime.strftime(first_message.created, MemorySimulationDemand.TIMESTAMPFORMAT)
 
     a_row = {'id': simulation_demand.pk,
+             'title': json_data[MemorySimulationDemand.SIMULATION_DESCRIPTION][MemorySimulationDemand.TITLE],
              'user': simulation_demand.user.email,
              'drifter_type': drifter_type,
              'lat': lat,
              'long': lon,
+             'creation_date': stcreation_time,
              'start_time': start_time,
-             'end_time': end_time
+             'end_time': end_time,
+             'status': simulation_demand.status
              }
 
     logger.info("{}, end".format(name_and_method))
@@ -181,6 +190,11 @@ def report_row(simulation_demand):
 
 
 def make_report_file(request):
+    """
+    Make a report file and send a mail to tell the admin
+    :param request:
+    :return:
+    """
     name_and_method = "views.make_report_file"
     logger.info("{}, start".format(name_and_method))
 
@@ -190,14 +204,14 @@ def make_report_file(request):
     os.chdir(MEDIA_DIR)
     strtime = dt.datetime.now().strftime("%Y%m%d-%H%M%s")
     file_name = "report-{}.csv".format(strtime)
-    url_part = "/media/{}".format(file_name)
     archive_file_path = os.path.join(MEDIA_DIR, file_name)
     url_archive_file_path = urljoin(base=MEDIA_URL, url=file_name)
     # logger.info("{}, report url : {}".format(name_and_method, archive_file_path))
     logger.info("{}, report url : {}".format(name_and_method, url_archive_file_path))
 
     with open(archive_file_path, 'w', newline='') as csv_file:
-        fieldnames = ["id", "user", "drifter_type", "lat", "long", "start_time", "end_time"]
+        fieldnames = ["id", "title", "user", "drifter_type", "lat", "long", "creation_date", "start_time", "end_time",
+                      "status"]
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames, delimiter=';', quotechar='"',
                                 quoting=csv.QUOTE_NONE)
         writer.writeheader()
@@ -211,8 +225,8 @@ def make_report_file(request):
     context = {"domain": "odnature.naturalsciences.be",
                "urlpath": url_archive_file_path}
 
-    message = render_to_string(template_name, context=context)
-
+    msg_template = "noos_viewer/report_available_msg.html"
+    message = render_to_string(msg_template, context=context)
     send_mail("NOOS-Drift Report File", message, ODIN_MAILANSWERACCOUNT, [MAIL_ADMIN_NOOSDRIFT])
 
     logger.info("{}, end".format(name_and_method))
@@ -221,26 +235,18 @@ def make_report_file(request):
 
 def archive_simulations(request):
     """
-    This demand is executed on the central and sets the "archive" field to True for all demands that are NOT protected.
-    Simulation demands set as archived will no longer be shown in the interface
+    Executed on the Central. Calls a helper to archive simulation demands
+    :param request:
+    :return:
     """
+
     name_and_method = "views.archive_simulations"
     logger.info("{}, start".format(name_and_method))
 
     if request.user is None or not request.user.is_authenticated:
         return redirect('home')
 
-    if request.user is None or not request.user.is_authenticated:
-        return redirect('home')
-
-    fifteen_days = dt.timedelta(days=15)
-    when_am_i = dt.datetime.utcnow()
-    fifteen_days_ago = when_am_i - fifteen_days
-
-    active_demands = SimulationDemand.active_objects.filter(created_time__lt=fifteen_days_ago, protected=False)
-    for a_demand in active_demands:
-        a_demand.archived = True
-        a_demand.save()
+    ArchiveHelper.archive_simulations()
 
     template_name = "noos_viewer/simulations_archived.html"
     logger.info("{}, end".format(name_and_method))
@@ -249,7 +255,8 @@ def archive_simulations(request):
 
 def simulation_init(request, simulationid):
     """
-
+    Called from user interface. The starting point to work with a demand (or simulation).
+    This sends back basic demand information.
     :param request:
     :param simulationid:
     :return:
@@ -337,12 +344,11 @@ def view_results_simulation_demand(request, simulationid):
     logger.info("{}, start".format(name_and_method))
 
     try:
-        simulation_demand = SimulationDemand.active_objects.get(pk=simulationid)
-        zipurl = ServiceSimulationDemandHelper.get_zip_url(simulationid)
+        zip_url = ServiceSimulationDemandHelper.get_zip_url(simulationid)
         template_name = 'noos_viewer/analysisresults.html'
         context = {"startData": {"demandid": simulationid}}
-        if zipurl:
-            context['zipurl'] = zipurl
+        if zip_url:
+            context['zipurl'] = zip_url
 
         logger.info("{}, end".format(name_and_method))
     except ObjectDoesNotExist:
@@ -394,10 +400,11 @@ def create_simulation_demand(request):
                 del new_demand_dict[MemorySimulationDemand.WAVES]
                 del new_demand_dict[MemorySimulationDemand.WIND]
                 del new_demand_dict[MemorySimulationDemand.CURRENT]
-
                 the_form = SimulationDemandForm(initial=new_demand_dict)
                 template_name = 'noos_viewer/simulationdemand.html'
-                context = {'form': the_form, 'theid': new_demand.pk}
+                context = {'form': the_form, 'theid': new_demand.pk,
+                           'sim_status': new_demand_dict[MemorySimulationDemand.STATUS],
+                           'user_msg': 'Demand Created'}
                 # logger.debug("{}, New demand data for form".format(name_and_method))
             else:
                 logger.error("{}, form is not valid ????".format(name_and_method))
@@ -483,9 +490,9 @@ def new_simulationdemand(request):
 
 def toggle_protection(request, simulationid):
     """
-    A method to edit part of a simulation demand's data
+    A method to toggle the value the protection field of a demand
     :param request:
-    :param simulationid: The simulation demand which the user wants to edit
+    :param simulationid: The simulation demand for which has to be changed
     :return
     """
     name_and_method = "toggle_protection"
@@ -515,7 +522,7 @@ def toggle_protection(request, simulationid):
 
 def edit_simulationdemand(request, simulationid):
     """
-    A method to edit part of a simulation demand's data
+    A method to get a form for editing part of a simulation demand's data
     :param request:
     :param simulationid: The simulation demand which the user wants to edit
     :return:
@@ -559,7 +566,7 @@ def edit_simulationdemand(request, simulationid):
     else:
         pass
 
-    logger.info("edit_simulationdemand, end")
+    logger.info("{}, end".format(name_and_method))
     return render(request, template_name, context)
 
 
@@ -582,19 +589,22 @@ def view_simulationdemand(request, simulationid):
         # logger.debug("{}, Found_simulationdemand, with id : {}".format(name_and_method,simulation_demand.id))
         # logger.debug("{}, Preparing the dictionary".format(name_and_method))
         simulation_demand_dict = demand_helper.extract_simulation_dict(simulation_demand)
-        the_form = SimulationDemandForm(initial=simulation_demand_dict)
+        # logger.info("{}, simulation_demand : {}".format(name_and_method, simulation_demand_dict))
+        the_form = SimulationDemandForm(simulation_demand_dict)
         zip_url = None
         if simulation_demand_dict[MemorySimulationDemand.STATUS] == StatusConst.OK:
             zip_url = ServiceSimulationDemandHelper.get_zip_url(simulation_demand_dict[MemorySimulationDemand.ID])
 
-        # logger.debug("{}, title is , {}".format(name_and_method, simulation_demand_dict[SimulationDemandHelper.TITLE]))
+        # local_title = simulation_demand_dict[SimulationDemandHelper.TITLE]
+        # logger.debug("{}, title is , {}".format(name_and_method, local_title))
         # logger.debug("{}, zip_url is , {}".format(name_and_method, zip_url))
         sim_status = simulation_demand_dict[MemorySimulationDemand.STATUS]
         # logger.debug("{}, sim_status is , {}".format(name_and_method, sim_status))
         template_name = 'noos_viewer/simulationdemand.html'
         response_context = {'form': the_form,
                             'theid': simulationid,
-                            "sim_status": sim_status}
+                            "sim_status": sim_status,
+                            'user_msg': ''}
         if zip_url:
             response_context['zipurl'] = zip_url
 
@@ -614,6 +624,8 @@ def signup(request):
     :param request:
     :return:
     """
+    name_and_method = "views.signup"
+    logger.info("{}, start".format(name_and_method))
     # logger.debug("signup")
     if request.method == 'POST':
         # logger.debug("signup, method POST")
@@ -663,14 +675,26 @@ def signup(request):
             send_mail(subject, message_user, ODIN_MAILANSWERACCOUNT, [the_user.email])
 
             return redirect('noos_viewer:account_activation_sent')
+        else:
+            logger.error("{}, form is not valid ????".format(name_and_method))
+            for afield in form.fields:
+                logger.error("{}, afield : {}".format(name_and_method, afield))
+
+            logger.error("{}, errors : {}".format(name_and_method, form.errors))
     else:
         form = SignUpForm()
 
     template_name = 'noos_viewer/signup.html'
+    logger.info("{}, end".format(name_and_method))
     return render(request, template_name, {'form': form})
 
 
 def contact_form(request):
+    """
+    Send a mail using form info
+    :param request:
+    :return:
+    """
     name_and_method = "contact_form"
     logger.info("{}, start".format(name_and_method))
     if request.method == 'GET':
