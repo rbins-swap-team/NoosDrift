@@ -1,32 +1,44 @@
-# Test of REST API
+# Create demands using a python script
 
 ## Intro
-Files to test submitting simulation demand automatically.
+Files to submit demands automatically using the REST API.
+Demands are described with files that use a specific JSON structure.
+If the structure is not followed or the data is garbled the REST services will respond with an error.   
 
-## The test code
+## Prerequisites
+A proper python virtual environement.
+Make sure you change the first line of the script to call for the python executable linked to your environment  
 
-The file to use is 
+## The script and the options
 
-```
-test_rest_mode.py
-```
+The command to use is 
+ * create-demand.py
 
+It has a number of options
+
+Option
+ * -u allows you to specify the user name
+ * -p allows you to specify the user password
+ * -f specifies one unique json file to process
+ * -F specifies a txt file containing a list of json file paths to process. Each path is on a separate line.
+ * -d specifies a directory where all the json files to process are kept
+
+Instead of using -u,-p you can store the user and password values in environment variables 
+ * NOOS_USER 
+ * NOOS_PWD
+ 
 This code does take for granted python will be able to find both json AND coreapi 
 modules in it's environment
 
-But you must : 
- * Adapt it with a valid user/pwd 
- * Make sure it uses the right hostname for the central (this is the one activated by default)
- * Adapt it to use the right request-NNN.json example file
- 
-This code could easily be adapted to expect a user/pwd/simulation-data-file
- 
-## The test data
+The result of calling create_demand.py is better stored in a file like so
+```
+./create-demand.py -f ./WhateverRequestFile.json >> TheAnswer.txt
+```
 
-All files ending with *json are test data files.
-Those files are supposed to be called by the test_rest_mode.py file and trigger a simulation demand.
+This will allow automatic download of processed demands data by the check-demands.py script like so
 
-The data in most of these files is NOT valid. They were meant to trigger invalid data response.
+```
+./check-demands.py zip_list ./TheAnswer.txt
+```
 
-However the structure is mostly correct, especially request-121-good.json so it would be best to use 
-this one as a template for your own data file.
+Where ./TheAnswer.txt is the file just created with the preceding command 
