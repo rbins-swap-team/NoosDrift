@@ -1,7 +1,7 @@
 {% autoescape off %}
 
 The simulation you requested has been completed.
-The results are available <a href="https://{{ domain }}/{% url 'noos_viewer:viewresults_simulationdemand' simulationid=theid %}">Here</a>
+The results are available <a href="{{domain}}{% url 'noos_viewer:viewresults_simulationdemand' simulationid=theid %}">Here</a>
 
 Regards from NOOSDrift-Team
 

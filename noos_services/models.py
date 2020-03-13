@@ -1,5 +1,4 @@
 from django.db import models
-import copy
 import coreapi
 import datetime as dt
 import glob
@@ -126,7 +125,7 @@ def validating_initial_conditions(json_data):
             try:
                 a_float = float(an_element.strip())
                 lats_float_list.append(a_float)
-            except ValueError as verr:
+            except ValueError:
                 msg = "Error in value {} for lats".format(an_element)
                 logger.error(msg)
                 raise ValidationError(msg)
@@ -139,7 +138,7 @@ def validating_initial_conditions(json_data):
                     try:
                         a_float = float(an_element.strip())
                         lats_float_list.append(a_float)
-                    except ValueError as verr:
+                    except ValueError:
                         msg = "Error in value {} for lats".format(an_element)
                         logger.error(msg)
                         raise ValidationError(msg)
@@ -159,7 +158,7 @@ def validating_initial_conditions(json_data):
             try:
                 a_float = float(an_element.strip())
                 lon_float_list.append(a_float)
-            except ValueError as verr:
+            except ValueError:
                 msg = "Error in value {} for lons".format(an_element)
                 logger.error(msg)
                 raise ValidationError(msg)
@@ -172,7 +171,7 @@ def validating_initial_conditions(json_data):
                     try:
                         a_float = float(an_element.strip())
                         lon_float_list.append(a_float)
-                    except ValueError as verr:
+                    except ValueError:
                         msg = "Error in value {} for lons".format(an_element)
                         logger.error(msg)
                         raise ValidationError(msg)
@@ -238,8 +237,8 @@ def validating_booleans(json_data):
 
     model_setup_keys = model_setup.keys()
 
-    mandatorybooleans = [MemorySimulationDemand.CURRENT, MemorySimulationDemand.WAVES, MemorySimulationDemand.WIND,
-                         MemorySimulationDemand.BEACHING]
+    mandatorybooleans = [MemorySimulationDemand.BEACHING, MemorySimulationDemand.CURRENT, MemorySimulationDemand.WAVES,
+                         MemorySimulationDemand.WIND]
 
     for aboolkey in mandatorybooleans:
         if aboolkey not in model_setup_keys:
@@ -248,19 +247,17 @@ def validating_booleans(json_data):
             raise ValidationError("Illegal value {} in '{}' in '{}', only true, false".format(
                   model_setup[aboolkey], aboolkey, MemorySimulationDemand.MODEL_SETUP))
 
-    optionalbooleans = [MemorySimulationDemand.HORIZONTAL_SPREADING,
-                        MemorySimulationDemand.NATURAL_VERTICAL_DISPERTION,
-                        MemorySimulationDemand.BUOYANCY,
-                        MemorySimulationDemand.EVAPORATION,
+    optionalbooleans = [MemorySimulationDemand.BUOYANCY,
                         MemorySimulationDemand.DISSOLUTION,
+                        MemorySimulationDemand.EVAPORATION,
+                        MemorySimulationDemand.HORIZONTAL_SPREADING,
+                        MemorySimulationDemand.NATURAL_VERTICAL_DISPERTION,
                         MemorySimulationDemand.SEDIMENTATION]
 
     for aboolkey in optionalbooleans:
         if model_setup[aboolkey]:
             if model_setup[aboolkey] not in [True, False]:
                 model_setup[aboolkey] = False
-            # raise ValidationError("Illegal value {} in '{}' in '{}', only true, false".format(
-            #      model_setup[aboolkey], aboolkey, MemorySimulationDemand.MODEL_SETUP))
 
     if MemorySimulationDemand.TWODTHREED not in model_setup:
         raise ValidationError("No '{}' value in '{}'".format(MemorySimulationDemand.TWODTHREED,
@@ -544,22 +541,22 @@ class Node(models.Model):
 
         try:
             self.verify_token()
-        except AssertionError as aerr:
-            logger.error("Node.refresh_token, {}".format(aerr))
-            raise aerr
+        except AssertionError as a_err:
+            logger.error("Node.refresh_token, {}".format(a_err))
+            raise a_err
 
         except coreapi.exceptions.ErrorMessage as exc:
-            theerror = exc.error
-            if theerror is None:
+            the_error = exc.error
+            if the_error is None:
                 logger.error("Node.refresh_token, error object is null")
                 raise exc
 
-            thedata = theerror.__dict__['_data']
-            if thedata is None:
+            the_data = the_error.__dict__['_data']
+            if the_data is None:
                 logger.error("Node.refresh_token, data in error object is null")
                 raise exc
 
-            nfe = thedata['non_field_errors']
+            nfe = the_data['non_field_errors']
             if nfe is None:
                 logger.error("Node.refresh_token, 'non_field_errors' in error object is null")
                 raise exc
@@ -641,7 +638,7 @@ class Node(models.Model):
 
 class NotArchivedManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().filter(archived=False)
+        return super().get_queryset().filter(archived=False).order_by('-created_time')
 
 
 class SimulationDemand(models.Model):
@@ -762,7 +759,7 @@ class SimulationElement(models.Model):
     json_data = jsonfield.JSONField()
 
     def __str__(self):
-        return u'%d: %s, %d, %s, %s' % (self.pk, self.simulation, self.idx, self.timestamp, self.json_data)
+        return "{}: {}, {}, {}, {}".format(self.pk, self.simulation, self.idx, self.timestamp, self.json_data)
 
 
 class SimulationMetadata(models.Model):
@@ -789,7 +786,7 @@ class SimulationCloud(models.Model):
     cloud_data = jsonfield.JSONField()
 
     def __str__(self):
-        return u'%d: %s, %d, %s, %s' % (self.pk, self.simulation, self.idx, self.timestamp, self.cloud_data)
+        return "{}: {}, {}, {}, {}".format(self.pk, self.simulation, self.idx, self.timestamp, self.cloud_data)
 
 
 class UploadedFile(models.Model):
@@ -807,7 +804,6 @@ class UploadedFile(models.Model):
 
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now_add=True)
-    # json_txt = models.TextField(default='{}')
     json_txt = jsonfield.JSONField()
 
     def __str__(self):
@@ -816,6 +812,7 @@ class UploadedFile(models.Model):
                                                         self.created, self.modified)
 
     def nc_filename(self):
-        if self.filename.endswith('.tgz'):
-            return self.filename.replace('.tgz', '.nc')
+        local_filename = self.filename.to_python(self.filename)
+        if local_filename.endswith('.tgz'):
+            return local_filename.replace('.tgz', '.nc')
         return ""
