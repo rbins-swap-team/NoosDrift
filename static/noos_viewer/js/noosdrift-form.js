@@ -1,6 +1,7 @@
 "use strict";
 
 $(function ($, L, window) {
+
   let drifter_type = $('#id_drifter_type');
   let drifter_name = $('#id_drifter_name');
 
@@ -29,6 +30,7 @@ $(function ($, L, window) {
 
   let the_submit = $('#id_submit');
   let the_form = $('#id_demandform');
+  let edit_mode = false;
 
   let future = moment.utc();
   future.add(4,'days');
@@ -42,6 +44,18 @@ $(function ($, L, window) {
   let goBack = function() {
       window.history.back();
   };
+
+  if ($('#id_id').length !== 0) {
+      edit_mode=true;
+  }
+
+  let str = window.location.href;
+
+  let newfrommodel = false;
+  let n = str.search("simulationdemand/newfrommodel/");
+  if (n !== -1) {
+      newfrommodel = true;
+  }
 
   const FORWARD = "forward";
   const BACKWARD = "backward";
@@ -215,6 +229,9 @@ $(function ($, L, window) {
      * @returns {boolean}
      */
   let check_release_times = function(str_release_times, element, param){
+      if ( param[0] === true ) {
+          return true;
+      }
       let new_vals = [];
       try {
           let list_moments = extract_times_from_txt(str_release_times);
@@ -290,7 +307,10 @@ $(function ($, L, window) {
      * A BACKWARD search has an end_time BEFORE the start_time
      * @returns {boolean}
      */
-  let check_release_times_coherence = function() {
+    let check_release_times_coherence = function(ledit_mode) {
+      if (ledit_mode === true) {
+         return true;
+      }
       let list_release_times = "";
       let list_start_time = "";
       let list_end_time = "";
@@ -342,6 +362,9 @@ $(function ($, L, window) {
      */
   let check_time_fields = function(str_time_field, element, param){
       // extract_times_from_txt returns an array of strings
+      if (param[0] === true) {
+          return true;
+      }
       let time_vals = extract_times_from_txt(str_time_field);
       if (time_vals.length === 0) {
           return false;
@@ -380,6 +403,9 @@ $(function ($, L, window) {
      * @returns {boolean}
      */
   let check_time_limit = function(str_time_field, element, param){
+      if (param[0] === true) {
+          return true;
+      }
       let time_vals = extract_times_from_txt(str_time_field);
       if (time_vals.length === 0) {
           return false;
@@ -411,25 +437,26 @@ $(function ($, L, window) {
        },
        lat: {
           required: true,
-          "check_coord_vals": 90.0
+          "check_coord_vals":90.0
        },
        simulation_end_time:{
           required:true,
-          "check_time_fields":true,
-          "check_time_limit":true
+          "check_time_fields":[edit_mode],
+          "check_time_limit":[edit_mode]
        },
        simulation_start_time:{
           required:true,
-          "check_time_fields":true,
-          "check_time_limit":true
+          "check_time_fields":[edit_mode],
+          "check_time_limit":[edit_mode]
        },
        release_times:{
           required:true,
-          "check_release_times":true,
+          "check_release_times":[edit_mode],
        }
     }, submitHandler: function(form) {
           try {
-              check_release_times_coherence();
+              // check_release_times_coherence();
+              check_release_times_coherence(edit_mode);
           } catch (e) {
               // Name undefined, not one of my Exceptions
               if (typeof e.name === 'undefined') {
@@ -475,6 +502,10 @@ $(function ($, L, window) {
               return false;
           }
 
+          if ($('#id_id').length !== 0) {
+              $('#id_id').prop("disabled", false);
+              console.log("noosdrift-form.js, submitHandler : "+$('#id_id').prop("disabled"));
+          }
           form.submit();
     }, messages: {
           lon:{
@@ -738,10 +769,8 @@ $(function ($, L, window) {
      "Container immersed at 100%": "CONTAINER-IMMERSED-100pc"
    };
 
-  let str = window.location.href;
-  let n = str.search("simulationdemand/edit/");
 
-  if (n === -1) {
+  if ( !edit_mode && !newfrommodel ) {
      if (twoDthreeD.val() === THREED) {
         buoyancy.removeAttr("disabled");
         natural_vertical_dispersion.removeAttr("disabled");
@@ -760,11 +789,11 @@ $(function ($, L, window) {
         horizontal_spreading.removeAttr("disabled");
         sedimentation.removeAttr("disabled");
 
-        drifter_name.empty();
-        $.each(Oil_options, function (key, value) {
-            drifter_name.append($("<option></option>")
-            .attr("value", value).text(key));
-        });
+        // drifter_name.empty();
+        // $.each(Oil_options, function (key, value) {
+        //    drifter_name.append($("<option></option>")
+        //    .attr("value", value).text(key));
+        // });
      } else if (drifter_type.val() === OBJECT) {
         dissolution.prop("checked", false);
         dissolution.prop("disabled", "true");
@@ -775,11 +804,11 @@ $(function ($, L, window) {
         sedimentation.prop("checked", false);
         sedimentation.prop("disabled", "true");
 
-        drifter_name.empty();
-        $.each(Object_options, function (key, value) {
-            drifter_name.append($("<option></option>")
-            .attr("value", value).text(key));
-        });
+        // drifter_name.empty();
+        // $.each(Object_options, function (key, value) {
+        //    drifter_name.append($("<option></option>")
+        //    .attr("value", value).text(key));
+        // });
      } else {
         dissolution.removeAttr("disabled");
         evaporation.removeAttr("disabled");
@@ -840,8 +869,8 @@ $(function ($, L, window) {
 
          drifter_name.empty();
          $.each(Oil_options, function (key, value) {
-              drifter_name.append($("<option></option>")
-              .attr("value", value).text(key));
+             drifter_name.append($("<option></option>")
+             .attr("value", value).text(key));
          });
 
          enable_oil_property(total_mass, 5000);
@@ -859,8 +888,8 @@ $(function ($, L, window) {
 
          drifter_name.empty();
          $.each(Object_options, function (key, value) {
-             drifter_name.append($("<option></option>")
-             .attr("value", value).text(key));
+            drifter_name.append($("<option></option>")
+            .attr("value", value).text(key));
          });
 
          disable_oil_property(total_mass, 5000);
@@ -873,15 +902,16 @@ $(function ($, L, window) {
       the_button.click();
   }
 
-  //Default, set all of these to checked
-  beaching.prop("checked", true);
-  buoyancy.prop("checked", true);
-  dissolution.prop("checked", true);
-  evaporation.prop("checked", true);
-  horizontal_spreading.prop("checked", true);
-  natural_vertical_dispersion.prop("checked", true);
-  sedimentation.prop("checked", true);
-  total_mass.val(5000);
-  radius.val(1000);
-
+  //Default, values for a new demand from scratch
+  if (!edit_mode && !newfrommodel) {
+      beaching.prop("checked", true);
+      buoyancy.prop("checked", true);
+      dissolution.prop("checked", true);
+      evaporation.prop("checked", true);
+      horizontal_spreading.prop("checked", true);
+      natural_vertical_dispersion.prop("checked", true);
+      sedimentation.prop("checked", true);
+      total_mass.val(5000);
+      radius.val(1000);
+  }
 }(window.jQuery, window.L, window, document));
