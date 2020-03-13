@@ -8,12 +8,13 @@
 {% block body_block %}
     <div class="container top-content">
         <div class="row">
-            <div class="col-5"><h2>Simulation description</h2></div>
-            <div class="col-7">
+            <div class="col-4"><h2>Simulation description</h2></div>
+            <div class="col-3"><h2>{{ user_msg }}</h2></div>
+            <div class="col-5">
                     <span class="float-right">
-                        <a class="btn btn-primary" href="{% url 'noos_viewer:simulationdemands' %}"
-                                   role="button">
-                                    <i class="fas fa-list-ol"></i>&nbsp;All Simulations
+                        <a class="btn btn-outline-primary" href="{% url 'noos_viewer:simulationdemands' %}" role="button"
+                           data-toggle="tooltip" data-placement="bottom" title="Return to simulation list">
+                            <i class="material-icons-round" style="vertical-align: middle;font-size: 1rem;">keyboard_backspace</i>
                         </a>
                         <a href="{% url 'noos_viewer:new_simulationdemand' %}" class="btn btn-outline-success"
                            role="button" data-toggle="tooltip" data-placement="bottom"
@@ -103,10 +104,6 @@
             </div>
         </div>
 
-
-
-
-
          <div class="fieldWrapper form-group row">
             <div class="col-md-2">
                     {% if form.simulation_type.help_text %}
@@ -121,11 +118,6 @@
                     {{ form.simulation_type|append_attr:"disabled:true" }}
             </div>
         </div>
-
-
-
-
-
 
         <div class="fieldWrapper form-group row">
             <div class="col-md-2">
@@ -170,7 +162,6 @@
             </div>
         </div>
 
-
         <div class="fieldWrapper form-group row">
             <div class="col-md-2">
                     {% if form.simulation_start_time.help_text %}
@@ -213,7 +204,6 @@
                     {{ form.protected|append_attr:"disabled:true" }}
             </div>
         </div>
-
 
         <div class="row" style="margin-top:2.0rem">
             <div class="col-4"><h2>Drifter</h2></div>
@@ -260,7 +250,6 @@
                     {{ form.total_mass|append_attr:"disabled:true" }}
             </div>
         </div>
-
 
         <div class="row" style="margin-top:2.0rem">
             <div class="col-4"><h2>Initial conditions</h2></div>

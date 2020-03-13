@@ -1,6 +1,6 @@
 {% extends 'noos_viewer/base.html' %}
 
-{% block title %}Error Page{% endblock %}
+{% block title %}Archiving OK{% endblock %}
 
 {% block body_block %}
     <div class="container top-content">
@@ -10,8 +10,14 @@
                     <div class="card" style="padding: 5px 1rem 1rem;">
                         <h2>Message</h2>
                         <div class="row">
-                            <div class="col">
-                                Unprotected simulations have been archived
+                            <div class="col-6">
+                                Unprotected simulation demands have been archived
+                            </div>
+                            <div>
+                                <a class="btn btn-outline-primary" href="{% url 'noos_viewer:simulationdemands' %}" role="button"
+                                   data-toggle="tooltip" data-placement="bottom" title="Return to simulation list">
+                                   <i class="material-icons-round" style="vertical-align: middle;font-size: 1rem;">keyboard_backspace</i>
+                                </a>
                             </div>
                         </div>
                     </div>

@@ -8,18 +8,33 @@
      <div class="container top-content">
         <div class="row">
             <div class="col-5"><h2>Contact</h2></div>
-            <div class="col-7 text-right">
+            <div class="col-4 text-right">
                     <span class="float-right">
-                        <a class="btn btn-primary" href="{% url 'noos_viewer:simulationdemands' %}"
+                        <a class="btn btn-primary" href="{% url 'home' %}"
                                    role="button">
-                           <i class="fas fa-list-ol"></i>&nbsp;All Simulations
+                           <i class="fas fa-list-ol"></i>&nbsp;Application Home
                         </a>
                     </span>
+            </div>
+            <div class="col-3 text-right">
+                {% if user.is_authenticated %}
+                    <span class="float-left">
+                        <a class="btn btn-outline-primary" href="{% url 'noos_viewer:simulationdemands' %}" role="button"
+                           data-toggle="tooltip" data-placement="bottom" title="Return to simulation list">
+                            <i class="material-icons-round" style="vertical-align: middle;font-size: 1rem;">keyboard_backspace</i>
+                        </a>
+                    </span>
+                {% endif %}
             </div>
         </div>
         <form method="POST">
             {% csrf_token %}
             {% for field in form %}
+               {% if field.name == 'captcha' %}
+                <div class="col-md-12" style="text-align:center;margin-bottom:15px">
+                    Please fill the next textbox !!!! WITH THE RESULT !!!! of the following mathematical operation
+                </div>
+                {% endif %}
                 <div class="fieldWrapper row form-group"
                      aria-required="{% if field.field.required %}true{% else %}false{% endif %}">
                     <div class="col-md-2">
@@ -36,6 +51,9 @@
                     </div>
                     <div class="col-md-10">
                         {{ field }}
+                        {% if field.name == 'captcha' %}
+                            <button class='captcha'>Refresh</button>
+                        {% endif %}
                     </div>
                 </div>
             {% endfor %}
@@ -46,4 +64,17 @@
             </div>
         </form>
     </div>
+{% endblock %}
+
+{% block page_js_block %}
+    <!-- # TODO adapt captcha url for production -->
+    <script type="application/javascript">
+        $('.help').tooltip({html: true});
+        $('.captcha').click(function () {
+            $.getJSON("{% url 'captcha-refresh' %}", function (result) {
+                $('.captcha').attr('src', result['image_url']);
+                $('#id_captcha_0').val(result['key'])
+            });
+        });
+    </script>
 {% endblock %}
