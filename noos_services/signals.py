@@ -254,14 +254,6 @@ def success_handler(result=None, sender=None, headers=None, body=None, **kwargs)
         local_message.save()
         logger.debug("{}, message to DB saved".format(object_and_method))
 
-        central_msg_dict = {SignalsConst.NODE: this_node.id,
-                            SignalsConst.SIMULATION_DEMAND: simulation_demand_id,
-                            SignalsConst.STATUS: message_status,
-                            SignalsConst.MESSAGE: message_message,
-                            SignalsConst.FORCING_COUPLE: this_forcing.id,
-                            SignalsConst.NOOS_MODEL: this_node.model.id,
-                            }
-
         os.chdir(NOOS_RESULTS_DIR)
         with open(model_forcing_result_file) as json_structure:
 
@@ -283,11 +275,6 @@ def success_handler(result=None, sender=None, headers=None, body=None, **kwargs)
             logger.debug("{}, uploaded message to Central sent".format(object_and_method))
 
             json_structure.close()
-
-        # replaced
-        # logger.debug("{}, sending logging message to Central".format(object_and_method))
-        # central.add_logging_message(message_parameters=central_msg_dict, the_user=NOOS_USER)
-        # logger.debug("{}, logging message to Central sent ".format(object_and_method))
 
     logger.debug("{}, end of".format(object_and_name))
 

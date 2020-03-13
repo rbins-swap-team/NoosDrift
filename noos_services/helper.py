@@ -9,17 +9,16 @@ import zipfile
 
 from noos_services.tasks import check_demand
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.mail import send_mail, BadHeaderError
+from django.core.mail import send_mail, EmailMessage
 from django.db.models import Count
 from django.template.loader import render_to_string
-from noosDrift.settings import ENV_DICT, MEDIA_DIR, MEDIA_URL, NOOS_FTPDIR, NOOS_MME_ID, NOOS_NODE_ID, NOOS_MME_MODEL, \
-    MAIL_ADMIN_NOOSDRIFT, NOOS_RESULTS_DIR, NOOS_USER, ODIN_MAILANSWERACCOUNT
+from noosDrift.settings import ENV_DICT, CENTRAL_DOMAIN, MEDIA_DIR, MEDIA_URL, NOOS_FTPDIR, NOOS_MME_ID, NOOS_NODE_ID, \
+    NOOS_MME_MODEL, MAIL_ADMIN_NOOSDRIFT, NOOS_RESULTS_DIR, NOOS_USER, ODIN_MAILANSWERACCOUNT
 from noos_services import tasks
 from noos_services.models import Forcing, ForcingCouple, LoggingMessage, Node, NoosModel, SimulationCloud, \
     SimulationDemand, SimulationElement, SimulationMetadata, UploadedFile
 from noos_services.ns_const import JsonMmeElementsConst, JsonSimulationElementsConst, MemorySimulationDemand, \
     OtherConst, StatusConst, SignalsConst
-
 logger = logging.getLogger(__name__)
 
 
@@ -62,9 +61,9 @@ class Helper:
                 simdict.update({MemorySimulationDemand.UPLOAD_MESSAGES: count_uploaded_messages})
 
                 if asimulation.status == StatusConst.OK:
-                   the_url = Helper.get_zip_url(simulation_id)
-                   if the_url:
-                       simdict.update({MemorySimulationDemand.ZIP_URL: the_url})
+                    the_url = Helper.get_zip_url(simulation_id)
+                    if the_url:
+                        simdict.update({MemorySimulationDemand.ZIP_URL: the_url})
 
                 all_sims_dict[simulation_id] = simdict
             except ObjectDoesNotExist:
@@ -294,18 +293,18 @@ class Helper:
         # simulation parameters  will be stored
         json_file_path = os.path.join(parameters_dir, json_filename)  # this is the name of the model parameter file
 
-        logger.debug("Saved work dir : {}".format(save_dir))
-        logger.debug("Current dir (results) : {}".format(os.getcwd()))
-        logger.debug("dest_dir : {}".format(dest_dir))
-        logger.debug("parameters_dir : {}".format(parameters_dir))
-        logger.debug("json_file_path : {}".format(json_file_path))
+        logger.debug("{}.{} Saved work dir : {}".format(the_class, the_method, save_dir))
+        logger.debug("{}.{} Current dir (results) : {}".format(the_class, the_method, os.getcwd()))
+        logger.debug("{}.{} dest_dir : {}".format(the_class, the_method, dest_dir))
+        logger.debug("{}.{} parameters_dir : {}".format(the_class, the_method, parameters_dir))
+        logger.debug("{}.{} json_file_path : {}".format(the_class, the_method, json_file_path))
 
         os.chdir(dest_dir)  # changing to result dir of the demand
-        logger.debug("Current dir (results) : {}".format(os.getcwd()))
+        logger.debug("{}.{} Current dir (results) : {}".format(the_class, the_method, os.getcwd()))
         archive_file = tarfile.open(sim_file_path, mode="r:gz")  # opening an archive file object for the archive
         extrnc = archive_file.extractfile(nc_filename)  # finding file ".*nc$" object in the archive
-        logger.debug("archive_file : {}".format(archive_file))
-        logger.debug("extrnc : {}".format(extrnc))
+        logger.debug("{}.{} archive_file : {}".format(the_class, the_method, archive_file))
+        logger.debug("{}.{} extrnc : {}".format(the_class, the_method, extrnc))
         dest_file = open(nc_filename, 'wb')  # creating a destination file object on the filesystem for the ".*nc$" file
         # of the archive
         for lines in extrnc:
@@ -455,7 +454,7 @@ class Helper:
                             StatusConst.FORCING_FILE_UPLOADED: Helper.node_message_on_central_help,
                             StatusConst.START_ANALYSIS: Helper.start_analysis_messages,
                             # StatusConst.START_ANALYSIS: Helper.end_of_line,
-                            StatusConst.ANALYSIS_ERROR: Helper.analysis_error_messages,
+                            # StatusConst.ANALYSIS_ERROR: Helper.analysis_error_messages,
                             StatusConst.ANALYSIS_OK: Helper.analysis_ok_messages}
         if instance.status in special_messages.keys():
             special_messages[instance.status](instance)
@@ -798,7 +797,7 @@ class Helper:
     def analysis_ok_messages(instance):
         """
         Executed on Central. Called from logging_messages_help. This method slurps the results of MME processing into
-        the database
+        the database. After that, all MME results are archived into a zip file in the MEDIA directory
         :param instance: A LoggingMessage object
         :return:
         """
@@ -820,10 +819,14 @@ class Helper:
                 Helper.slurp_one_geojson_node_output(file_dir=mme_output_dir, filename=name, log_message=instance)
 
         os.chdir(MEDIA_DIR)
+        other_str_time = instance.simulation_demand.created_time.strftime("%Y%m%d-%H%M")
         strtime = dt.datetime.now().strftime("%Y%m%d-%H%M")
         demand_dir = str(instance.simulation_demand.id)
         archive_file_path = os.path.join(MEDIA_DIR, "simulation-{}-{}.zip".format(str(instance.simulation_demand.id),
-                                                                                  strtime))
+                                                                                  other_str_time))
+        if os.path.exists(archive_file_path):
+            os.remove(archive_file_path)
+
         with zipfile.ZipFile(archive_file_path, "x") as my_zip:
             os.chdir(NOOS_RESULTS_DIR)
             for root, a_dir, files in os.walk(demand_dir):
@@ -832,11 +835,32 @@ class Helper:
                     my_zip.write(os.path.join(root, a_file))
 
         message_user = render_to_string('noos_services/simulation_completed.html', {
+                'domain': CENTRAL_DOMAIN,
                 'theid': instance.simulation_demand.pk
         })
 
-        send_mail("Simulation Completed", message_user, ODIN_MAILANSWERACCOUNT, [instance.simulation_demand.user.email,
-                                                                                 MAIL_ADMIN_NOOSDRIFT])
+        if not instance.simulation_demand.user.email == MAIL_ADMIN_NOOSDRIFT:
+            email = EmailMessage(
+                subject="Simulation Completed",
+                body=message_user,
+                from_email=ODIN_MAILANSWERACCOUNT,
+                to=[instance.simulation_demand.user.email],
+                cc=[MAIL_ADMIN_NOOSDRIFT],
+                reply_to=['noreply@naturalsciences.be']
+            )
+        else:
+            email = EmailMessage(
+                subject="Simulation Completed",
+                body=message_user,
+                from_email=ODIN_MAILANSWERACCOUNT,
+                to=[instance.simulation_demand.user.email],
+                reply_to=['noreply@naturalsciences.be']
+            )
+
+        email.send(fail_silently=True)
+        # send_mail("Simulation Completed", message_user, ODIN_MAILANSWERACCOUNT,
+        # [instance.simulation_demand.user.email, MAIL_ADMIN_NOOSDRIFT])
+
         logger.info("{}, end of".format(object_and_method))
         return 0
 

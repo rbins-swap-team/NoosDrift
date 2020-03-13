@@ -16,7 +16,7 @@ class SimulationDemandSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = SimulationDemand
         fields = ('url', MemorySimulationDemand.ID, 'user', MemorySimulationDemand.CREATED_TIME,
-                  MemorySimulationDemand.JSON_TXT)
+                  MemorySimulationDemand.JSON_TXT, MemorySimulationDemand.STATUS)
 
     def create(self, validated_data):
         name_and_method = "SimulationDemandSerializer.create"

@@ -11,8 +11,21 @@ from noosDrift.settings import BASE_DIR, ENV_DICT, NOOS_MME_MODEL, NOOS_NODE_ID,
     NOOS_NODE_PREPROCESSING_CMD, NOOS_MAPS_CMD, NOOS_NODE_POSTPROCESSING_CMD, NOOS_RESULTS_DIR, NOOS_USER
 from noos_services.models import ForcingCouple, LoggingMessage, Node, NoosModel, SimulationDemand
 from noos_services.ns_const import MemorySimulationDemand, SignalsConst, StatusConst, OtherConst
+from noos_services.archivehelper import ArchiveHelper
 
 logger = get_task_logger(__name__)
+
+
+@background()
+def archive_old_demands():
+    """
+    Executed on the Central. Calls a helper to archive simulation demands
+    :return:
+    """
+    name_and_method = "Tasks.archive_old_demands"
+    logger.info("{}, start of".format(name_and_method))
+    ArchiveHelper.archive_simulations()
+    logger.info("{}, end of".format(name_and_method))
 
 
 @background(schedule=1020)  # 1020 is 17 minutes
@@ -171,6 +184,7 @@ def mme_processing(self, *args, **kwargs):
     command_line.append(inputfolder)
     logger.info("{}, will try this {}".format(name_and_method, " ".join(command_line)))
 
+    # TODO The following lines must NOT be commented for production.
     data = subprocess.run(command_line, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False, check=True,
                           timeout=3600, universal_newlines=True)
     data.check_returncode()
@@ -196,12 +210,16 @@ def create_init_rp(self, *args, **kwargs):
     destination_node = Node.objects.get(pk=node_id)
     noos_model = destination_node.model
     simulation_demand_id = kwargs[SignalsConst.SIMULATION_DEMAND_ID]
-    simulation_demand = SimulationDemand.objects.get(pk=simulation_demand_id)
-    logger.info("{}, logging message {}".format(object_and_method, kwargs[SignalsConst.MESSAGE]))
-    rp = LoggingMessage(simulation_demand=simulation_demand, node=destination_node,
-                        status=StatusConst.INIT_SIMULATION, noos_model=noos_model,
-                        message=kwargs[SignalsConst.MESSAGE])
-    rp.save(force_insert=True)
+    try:
+        simulation_demand = SimulationDemand.objects.get(pk=simulation_demand_id)
+        logger.info("{}, logging message {}".format(object_and_method, kwargs[SignalsConst.MESSAGE]))
+        rp = LoggingMessage(simulation_demand=simulation_demand, node=destination_node,
+                            status=StatusConst.INIT_SIMULATION, noos_model=noos_model,
+                            message=kwargs[SignalsConst.MESSAGE])
+        rp.save(force_insert=True)
+    except SimulationDemand.DoesNotExist:
+        logger.error("{}, Strange, demand {} does not exist???".format(object_and_method, simulation_demand_id))
+
     logger.info("{}, end of".format(object_and_method))
     return None
 
@@ -493,8 +511,10 @@ class Job:
             the_simulation_demand_dict = {SignalsConst.THEJSONTXT: result_simulation_demand_json,
                                           SignalsConst.NODE_ID: destination_node.pk,
                                           SignalsConst.IMMUTABLE: True}
-
+            # logger.info("{}, appending create_init task".format(objectandmethod))
             task_list.append(create_init_rp.signature(kwargs=the_message_dict))
+
+            # TODO the following line must NOT be commented for production
             task_list.append(send_demand_to_node.signature(kwargs=the_simulation_demand_dict))
 
         if task_list:

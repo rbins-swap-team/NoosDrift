@@ -21,6 +21,7 @@ from django.urls import path, re_path
 from django.views.generic.base import RedirectView, TemplateView
 from noos_services import views
 from noos_services.permissions import IsReadOnly
+from noos_viewer import views as noos_viewer_views
 from noosDrift.settings import SCHEMA_URL, BASE_URL
 from requests.compat import urljoin
 from rest_framework import routers
@@ -66,9 +67,12 @@ router.register(r'simulationelements', views.SimulationElementViewSet)
 icon_url = urljoin(urljoin(BASE_URL, "static/"), "favicon.ico")
 
 urlpatterns = [
+                  path('signup/', noos_viewer_views.signup, name='signup'),
                   path('accounts/', include('django.contrib.auth.urls')),
                   path('noos_services/', include('noos_services.urls')),
                   re_path(r'^favicon.ico$', RedirectView.as_view(url=icon_url, permanent=False), name="favicon"),
+                  url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+                  path('noos_viewer/', include('noos_viewer.urls')),
                   path('admin/', admin.site.urls),
                   path('captcha/', include('captcha.urls')),
                   path('api-token-auth', obtain_jwt_token),
@@ -77,5 +81,6 @@ urlpatterns = [
                   path('schema/core.json', schema_core_json_view),
                   path('schema/openapi.json', schema_open_json_view),
                   path('schema/openapi.yaml', schema_open_yaml_view),
+                  path('home/', TemplateView.as_view(template_name='noos_viewer/home.html'), name='home'),
                   re_path(r'^', include(router.urls)),
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

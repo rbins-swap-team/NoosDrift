@@ -27,7 +27,6 @@ class ValidationHelper:
             logger.error("{}, {}".format(name_and_method, err_msg))
             raise ValidationError(err_msg)
         ok_list = []
-        choices_list = []
         if drifter_type == OtherConst.OIL:
             choices_list = DRIFTER_NAME_OIL_CHOICES
         else:
@@ -45,24 +44,6 @@ class ValidationHelper:
             raise ValidationError(err_msg)
 
         return drifter_name
-
-    @staticmethod
-    def validate_bool(bool_name, data):
-        if type(data) == str and data.upper() == "TRUE":
-            return True
-        if type(data) == str and data.upper() == "FALSE":
-            return False
-        if data in [True, False]:
-            return data
-
-        return False
-
-    @staticmethod
-    def validating_evaporation(drifter_type, data):
-        if drifter_type == OtherConst.OBJECT:
-            return False
-
-        return ValidationHelper.validate_bool("evaporation", data)
 
     @staticmethod
     def validating_geometry(data):
@@ -115,7 +96,8 @@ class ValidationHelper:
                     raise ValidationError(err_msg)
             elif lat_or_lon == MemorySimulationDemand.LON:
                 if a_value < -180.0 or a_value > 180.0:
-                    err_msg = "Invalid value {} : {}. Value must be between -180.0 and 180.0".format(lat_or_lon, a_value)
+                    err_msg = "Invalid value {} : {}. Value must be between -180.0 and 180.0".format(lat_or_lon,
+                                                                                                     a_value)
                     raise ValidationError(err_msg)
 
         logger.info("{}, end".format(name_and_method))
@@ -313,7 +295,6 @@ class ValidationHelper:
 
     @staticmethod
     def validating_in_time_limits(a_datetime):
-        err_msg = ""
         four_days = dt.timedelta(days=4)
         when_am_i = dt.datetime.utcnow()
         four_days_ago = when_am_i - four_days
@@ -328,22 +309,26 @@ class ValidationHelper:
     @staticmethod
     def validating_total_mass(drifter_type, data):
         name_and_method = "ValidationHelper.validating_simulation_start_time"
+        logger.info("{}, start".format(name_and_method))
         try:
             data += 1
             data -= 1
         except TypeError:
-            msgtmp = "Illegal value {} in '{}', only positive integers"
-            raise ValidationError(msgtmp.format(data, MemorySimulationDemand.TOTAL_MASS))
+            tmp_msg = "Illegal value {} in '{}', only positive integers"
+            the_msg = tmp_msg.format(data, MemorySimulationDemand.TOTAL_MASS)
+            logger.error("{}, {}".format(name_and_method, the_msg))
+            raise ValidationError(the_msg)
 
         if drifter_type == OtherConst.OIL:
             if data > 10000000 or data < 0:
                 tmp_msg = "Illegal value {} in '{}', value must be > 0,  and < 10000000"
                 the_msg = tmp_msg.format(data, MemorySimulationDemand.TOTAL_MASS)
+                logger.error("{}, {}".format(name_and_method, the_msg))
                 raise ValidationError(the_msg)
         else:
             if data != -1:
                 return -1
-
+        logger.info("{}, end".format(name_and_method))
         return data
 
     @staticmethod

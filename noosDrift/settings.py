@@ -22,12 +22,18 @@ try:
 except OSError as oserr:
     HOSTNAME = 'localhost'
 
+# TODO Comment the following line for production
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 CENTRAL_ROLE = "Central"
 NODE_ROLE = "Node"
 
 NOOS_CENTRAL_ID = "NOOS_CENTRAL_ID"
+NOOS_DBHOST = "NOOS_DBHOST"
+NOOS_DBPWD = "NOOS_DBPWD"
+NOOS_DBNAME = "NOOS_DBNAME"
+NOOS_DBPORT = "NOOS_DBPORT"
+NOOS_DBUSER = "NOOS_DBUSER"
 NOOS_DEV = "DEV"
 NOOS_ENV = "NOOS_ENV"
 NOOS_MME_ID = "NOOS_MME_ID"
@@ -35,18 +41,22 @@ NOOS_MME_MODEL = "NOOS_MME_MODEL"
 NOOS_NODE_ID = "NOOS_NODE_ID"
 NOOS_PROD = "PROD"
 NOOS_ROLE = "NOOS_ROLE"
-NOOS_MME_CMD = ['LinuxCommand', 'param01', 'param02']
-NOOS_MAPS_CMD = ['LinuxCommand', 'param01', 'param02']
-NOOS_NODE_PREPROCESSING_CMD = ['LinuxCommand', 'param01', 'param02']
-
-# TODO replace with command to execute model software
-NOOS_NODE_MODEL_CMD = ['LinuxCommand', 'param01', 'param02']
-NOOS_NODE_POSTPROCESSING_CMD = ['LinuxCommand', 'param01', 'param02']
+NOOS_MME_CMD = ['python', '/var/opt/noosdrift/Django/noosDrift/mme_code/noos-mme.py', '-i']
+NOOS_MAPS_CMD = ""
+NOOS_NODE_PREPROCESSING_CMD = ""
+NOOS_NODE_MODEL_CMD = ""
+NOOS_NODE_POSTPROCESSING_CMD = ""
 NOOS_USERNAME = "NOOS_USERNAME"
 NOOS_USERPWD = "NOOS_USERPWD"
 NOOS_FTPDIR = os.path.join(BASE_DIR, 'requests')
 
+# NOOS_SFTP_USER = "NOOS_SFTP_USER"
+# NOOS_SFTP_HOST = "NOOS_SFTP_HOST"
+# NOOS_SFTP_PWD = "NOOS_SFTP_PWD"
+# NOOS_SFTP_KEYFILE = None
+
 ENV_VARS = (NOOS_NODE_ID, NOOS_USERNAME, NOOS_USERPWD, NOOS_ROLE, NOOS_CENTRAL_ID, NOOS_ENV)
+DB_VARS = (NOOS_DBHOST, NOOS_DBNAME, NOOS_DBPORT, NOOS_DBPWD, NOOS_DBUSER)
 
 ENV_DICT = {}
 
@@ -74,26 +84,48 @@ if mme_env_value is not None:
     if ENV_DICT[NOOS_MME_ID] == ENV_DICT[NOOS_NODE_ID]:
         ENV_DICT[NOOS_MME_MODEL] = 4
 
-# Settings for a Node
+for env_var_name in DB_VARS:
+    env_value = os.environ.get(env_var_name)
+    if env_value is None:
+        msg = "No {} defined and exported in bash environment".format(env_var_name)
+        print(msg)
+        assert env_value is not None, msg
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'HOST': os.environ.get(NOOS_DBHOST),
+        'NAME': os.environ.get(NOOS_DBNAME),
+        'PORT': os.environ.get(NOOS_DBPORT),
+        'PASSWORD': os.environ.get(NOOS_DBPWD),
+        'USER': os.environ.get(NOOS_DBUSER),
     }
 }
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
-# Base URL des machines noos-drift chez les partenaires
-BASE_URL = '/api/'
+# Base URL
+CENTRAL_DOMAIN = "https://odnature.naturalsciences.be"
+BASE_URL = '/'
+if HOSTNAME in ['odin', 'pagurus']:
+    BASE_URL = '/noosdrift/api/'
+# Noms des machines noos-drift chez les partenaires
+elif HOSTNAME in ['noos-drift-a-01', 'noosdriftf1-see']:
+    BASE_URL = '/api/'
 
 SCHEMA_URL = ""
 schema_dict = {
-    'nomDeMachine': 'https://versMachine'
+    'noos-drift-a-01': 'https://noos-drift.met.no',
+    'odin': 'https://odnature.naturalsciences.be',
+    'noosdriftf1-see': 'https://noosdrift.meteo.fr',
+    'pagurus': 'http://pagurus.rbins.be'
 }
 
-SCHEMA_URL = urljoin(schema_dict[HOSTNAME], BASE_URL)
+if HOSTNAME not in schema_dict.keys():
+    SCHEMA_URL = urljoin('http://' + HOSTNAME + ':8000', BASE_URL)
+else:
+    SCHEMA_URL = urljoin(schema_dict[HOSTNAME], BASE_URL)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get("NOOS_SECRET_KEY")
@@ -107,7 +139,12 @@ DEBUG = False
 if NOOS_DEV == ENV_DICT[NOOS_ENV]:
     DEBUG = True
 
-ALLOWED_HOSTS = ['nomDeMachine', 'odnature.naturalsciences.be', 'localhost', '127.0.0.1']
+# TODO Always check this before commit
+ALLOWED_HOSTS = ['noos-drift.met.no', 'noosdrift.meteo.fr', 'pagurus.rbins.be', 'odnature.naturalsciences.be']
+# ALLOWED_HOSTS = ['*']
+# ALLOWED_HOSTS = ['odn-mk', 'lc11-102', 'localhost', '127.0.0.1', '18pc-042', '10.23.21.35']
+
+ADMINS = [('mkapel', 'mkapel@naturalsciences.be'), ('sorsi', 'sorsi@naturalsciences.be')]
 
 CAPTCHA_CHALLENGE_FUNCT = 'captcha.helpers.math_challenge'
 
@@ -116,14 +153,17 @@ CAPTCHA_CHALLENGE_FUNCT = 'captcha.helpers.math_challenge'
 INSTALLED_APPS = [
     'captcha',
     'noos_services.apps.NoosServicesConfig',
+    'noos_viewer.apps.NoosViewerConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'widget_tweaks',
     'rest_framework',
     'rest_framework.authtoken',
+    'background_task',
 ]
 
 MIDDLEWARE = [
@@ -222,8 +262,8 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle'
     ),
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '200/day',  # 50   for each node + central
-        'user': '1000/day'  # 1000 request a day allowed by authenticated user
+        'anon': '500/day',  # 125   requests a day allowed for each 3 nodes + central (in case ip masked by proxy)
+        'user': '3000/day'  # 3000  requests a day allowed for each authenticated user
     }
 }
 
@@ -280,22 +320,7 @@ LOGGING = {
         },
     },
     'loggers': {
-        'noos_services.serializers': {
-            'handlers': ['file'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-        'noos_services.views': {
-            'handlers': ['file'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-        'noos_services.signals': {
-            'handlers': ['file'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-        'noos_services.models': {
+        'noos_services.archivehelper': {
             'handlers': ['file'],
             'level': 'DEBUG',
             'propagate': True,
@@ -305,12 +330,47 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
-        'rest_framework.mixins': {
+        'noos_services.models': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'noos_services.serializers': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'noos_services.signals': {
             'handlers': ['file'],
             'level': 'DEBUG',
             'propagate': True,
         },
         'noos_services.tasks': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'noos_services.validationhelper': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'noos_services.views': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'rest_framework.mixins': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'noos_viewer.forms': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'noos_viewer.helper': {
             'handlers': ['file'],
             'level': 'DEBUG',
             'propagate': True,
@@ -325,16 +385,6 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
-        'noos_viewer.helper': {
-            'handlers': ['file'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-        'noos_viewer.forms': {
-            'handlers': ['file'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
     },
 }
 
@@ -342,11 +392,23 @@ ACTIVE_NODES = {}
 
 APPUSERS_GROUP = 'appusers'
 
+EMAIL_HOST = 'mail.rbins.be'
+EMAIL_PORT = 25
+EMAIL_HOST_USER = 'odin-apache@odnature.be'
+EMAIL_HOST_PASSWORD = 'Odin#1200'
+EMAIL_USE_TLS = True
+
+DEFAULT_FROM_EMAIL = 'noreply@naturalsciences.be'
+ODIN_MAILANSWERACCOUNT = 'noreply@naturalsciences.be'
+NOOSDRIFT_MAILINGLIST = 'mkapel@naturalsciences.be'
+MAIL_ADMIN_NOOSDRIFT = 'slegrand@naturalsciences.be'
+
 NOOS_ERROR_CODES = {
     0: ("Model simulation successfully completed (no error)", "FORCING-PROCESSED"),
     1: ("Initial position out of model domain", "FORCING-ERROR"),
     2: ("Initial position on land", "FORCING-ERROR"),
-    3: ("Simulation start and/or end time are not in the forcing availability period  [today – 4 days, today + 4 days]", "FORCING-ERROR"),
+    3: ("Simulation start and/or end time are not in the forcing availability period  [today – 4 days, today + 4 days]",
+        "FORCING-ERROR"),
     4: ("Release time of Lagrangian particle out of the simulation start time and end time windows", "FORCING-ERROR"),
     5: ("Drifter type unknown or not available in the model", "FORCING-ERROR"),
     6: ("Model cannot handle the requested set-up -> set-up has been adapted", "FORCING-ERROR"),
@@ -372,7 +434,7 @@ if DEBUG is False and HOSTNAME in ['noos-drift-a-01', 'odin']:
     SECURE_SSL_REDIRECT = True
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-    SECURE_HSTS_SECONDS = 3600
+    SECURE_HSTS_SECONDS = 31556952
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
@@ -380,3 +442,12 @@ if DEBUG is False and HOSTNAME in ['noos-drift-a-01', 'odin']:
 X_FRAME_OPTIONS = 'DENY'
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# django background task settings
+MAX_ATTEMPTS = 25
+MAX_RUN_TIME = 3600
+BACKGROUND_TASK_RUN_ASYNC = True
+# Specifies number of concurrent threads. Default is multiprocessing.cpu_count().
+BACKGROUND_TASK_ASYNC_THREADS = 4
+# Control the ordering of tasks in the queue.
+BACKGROUND_TASK_PRIORITY_ORDERING = "DESC"
