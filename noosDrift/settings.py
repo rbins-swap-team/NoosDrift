@@ -124,6 +124,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
+    'background_task'
 ]
 
 MIDDLEWARE = [
@@ -365,6 +366,9 @@ CELERY_RESULT_BACKEND = 'rpc://'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
+
+MAIL_ADMIN_NOOSDRIFT = ""
+ODIN_MAILANSWERACCOUNT = ""
 
 # Security settings
 # Only with certificate
