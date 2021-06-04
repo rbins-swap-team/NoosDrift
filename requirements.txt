@@ -12,7 +12,7 @@ coreschema==0.0.4
 # !! Keep cryptography at 2.5 for paramiko 2.7.1 ---> https://github.com/paramiko/paramiko/blob/2.7.1/.travis.yml
 cryptography==3.4.7
 cycler==0.10.0
-Django==2.2.20
+Django==2.2.21
 django-background-tasks==1.2.5
 django-compat==1.0.15
 django-jsonfield==1.4.1
